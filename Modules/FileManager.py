@@ -5,7 +5,7 @@ from Modules.LogManager import Log
 
 
 class FileManager:
-    def __init__(self, current_path: str):
+    def __init__(self, current_path: str) -> None:
         self.path = None
         self.current_path = current_path
         self.log_path = os.path.join(self.current_path, "Log")
@@ -14,13 +14,13 @@ class FileManager:
         self.log = Log(path=os.path.join(self.log_path, "FileManagerLog.txt"))
 
     def __empty_path(self) -> ValueError | None:
-        if str.isspace(self.path):
+        if self.path is None or str.isspace(self.path):
             errmsg = "No specified file path."
             raise ValueError(errmsg)
         else:
             return None
 
-    def create_dir(self, path: str | None = None, ignore_tips: bool = False) -> None:
+    def create_dir(self, path: str, ignore_tips: bool = False) -> str | None:
         self.path = path
         self.__empty_path()
 
@@ -36,63 +36,55 @@ class FileManager:
                 while True:
                     log_debug1 = "Do you want to overwrite it ([y]/n)?"
                     self.log.debug(log_debug1)
-                    ans1 = input(log_debug1).lower()
-                    if len(ans1) == 0:
-                        ans1 = "y"
-                    self.log.info(f"User input: {ans1}")
+                    ans = input(log_debug1).lower()
+                    if len(ans) == 0:
+                        ans = "y"
+                    self.log.info(f"User input: {ans}")
 
-                    if ans1 == "y":
-                        log_debug2 = "Confirm again ([y]/n):"
-                        self.log.debug(log_debug2)
-                        ans2 = input(log_debug2).lower()
-                        if len(ans2) == 0:
-                            ans2 = "y"
-                        self.log.info(f"User input: {ans2}")
-
-                        if ans2 == "y":
+                    if ans == "y":
+                        try:
                             shutil.rmtree(self.path)
                             os.makedirs(self.path)
-                            break
-
-                        elif ans2 == "n":
-                            log_info2 = "Directory will not be overwritten."
-                            self.log.info(log_info2)
-                            print(log_info2)
-                            continue
-                        else:
-                            log_warn = "Invalid input. Please try again."
-                            self.log.warn(log_warn)
-                            continue
-                    elif ans1 == "n":
-                        log_info3 = "Directory will not be overwritten."
+                            
+                            log_info4 = "Directory overwrote successfully."
+                            self.log.info(log_info4)
+                            
+                            return self.path
+                        except shutil.Error as e:
+                            log_error1 = f"An error occurred: {e.strerror}"
+                            self.log.error(log_error1)
+                            return None
+                        except os.error as e:
+                            log_error2 = f"An error occurred: {e.strerror}"
+                            self.log.error(log_error2)
+                            return None
+                    elif ans == "n":
+                        log_info3 = "Directory has been retained."
                         self.log.info(log_info3)
-                        print(log_info3)
-                        continue
+                        return self.path
                     else:
                         log_warn = "Invalid input. Please try again."
                         self.log.warn(log_warn)
                         continue
-
-                log_info4 = "Directory overwrote successfully."
-                self.log.info(log_info4)
-                print(log_info4)
             else:
                 try:
                     os.makedirs(self.path, exist_ok=True)
-                    self.log.info("Directory created successfully.")
+                    return self.path
                 except OSError as e:
                     self.log.warn(e.strerror)
+                    return None
         else:
             os.makedirs(self.path)
-            self.log.info("Directory created successfully.")
+            self.log.debug("Directory created successfully.")
+            return self.path
 
-    def delete_dir(self, path: str = None, __called_by_cmd: bool = True) -> True | False:
-        self.log.debug(f"The argument of parameter '__called_by_cmd' is {__called_by_cmd}.")
+    def delete_dir(self, path: str, called_by_cmd: bool = True) -> True | False:
+        self.log.debug(f"The argument of parameter 'called_by_cmd' is {called_by_cmd}.")
         self.path = path
         self.__empty_path()
 
         if not os.path.exists(self.path):
-            if not __called_by_cmd:
+            if not called_by_cmd:
                 self.log.error("Directory does not exist.")
 
             return False
@@ -101,16 +93,20 @@ class FileManager:
             shutil.rmtree(self.path)
         except FileNotFoundError:
             self.log.warn(f"No such directory: {self.path}.")
+        except OSError as e:
+            self.log.warn(f"OSError: {e.strerror}.")
 
-        if not __called_by_cmd:
+        if not called_by_cmd:
             log_info = "Directory deleted successfully."
             self.log.info(log_info)
-            print(log_info)
+        else:
+            log_debug = "Directory deleted successfully."
+            self.log.debug(log_debug)
 
         return True
 
 
 if __name__ == "__main__":
     file_manager = FileManager(os.getcwd())
-    file_manager.create_dir(path=r"../tmp")
-    file_manager.delete_dir(path=r"../tmp")
+    file_manager.create_dir(path=r"../temp")
+    file_manager.delete_dir(path=r"../temp")
