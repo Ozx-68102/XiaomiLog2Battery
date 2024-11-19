@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import time
 
 from Modules.LogManager import Log
 
@@ -32,32 +33,54 @@ class Recording:
         ]
 
         if os.path.exists(csv_path):
+            log_info1 = f"file {os.path.basename(csv_path)} have already exists."
+            self.log.info(log_info1)
+            time.sleep(0.01)
+            ans = None
 
+            while ans not in ["y", "n"]:
+                log_debug1 = "Do you want to overwrite this file ([y]/n):"
+                self.log.debug(log_debug1)
+                ans = input(log_debug1).lower()
+                ans = "y" if len(ans) == 0 else ans
+
+                log_debug2 = f"User input: {ans}"
+                self.log.debug(log_debug2)
+
+                if ans == "y":
+                    try:
+                        os.remove(csv_path)
+                        log_debug3 = f"File {os.path.basename(csv_path)} has been deleted."
+                        self.log.debug(log_debug3)
+                    except PermissionError as e:
+                        log_warn1 = f"Permission denied: {e.strerror}"
+                        self.log.warn(log_warn1)
+                        return None
+                elif ans == "n":
+                    log_info2 = f"File {os.path.basename(csv_path)} has been retained."
+                    self.log.info(log_info2)
+                    return csv_path
+                else:
+                    log_warn1 = "Invalid input. Please try again."
+                    self.log.warn(log_warn1)
+        else:
             try:
-                os.remove(csv_path)
+                df = pd.DataFrame(columns=columns)
+                df.index.name = "Log Captured Time"
+                df.to_csv(csv_path, index=True, header=True)
+                return csv_path
+            except FileNotFoundError as e:
+                log_warn1 = f"File not found: {e.strerror}"
+                self.log.warn(log_warn1)
+                return None
             except PermissionError as e:
                 log_warn1 = f"Permission denied: {e.strerror}"
                 self.log.warn(log_warn1)
                 return None
-
-        try:
-            df = pd.DataFrame(columns=columns)
-            df.index.name = "Log Captured Time"
-            df.to_csv(csv_path, index=True, header=True)
-        except FileNotFoundError as e:
-            log_warn1 = f"File not found: {e.strerror}"
-            self.log.warn(log_warn1)
-            return None
-        except PermissionError as e:
-            log_warn1 = f"Permission denied: {e.strerror}"
-            self.log.warn(log_warn1)
-            return None
-        except OSError as e:
-            log_warn1 = f"OSError: {e.strerror}"
-            self.log.warn(log_warn1)
-            return None
-
-        return csv_path
+            except OSError as e:
+                log_warn1 = f"An error occurred: {e.strerror}"
+                self.log.warn(log_warn1)
+                return None
 
     def __import_data(self, dataf: pd.DataFrame, csv_p: str) -> bool:
         try:
@@ -71,7 +94,7 @@ class Recording:
             self.log.warn(log_warn1)
             return False
         except OSError as e:
-            log_warn1 = f"OSError: {e.strerror}"
+            log_warn1 = f"An error occurred: {e.strerror}"
             self.log.warn(log_warn1)
             return False
 
@@ -145,3 +168,8 @@ class Recording:
             return updated_data
         else:
             return None
+
+
+if __name__ == "__main__":
+    pass
+

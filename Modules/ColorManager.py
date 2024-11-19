@@ -77,5 +77,4 @@ class ColorManager:
 
 
 if __name__ == "__main__":
-    color_manager = ColorManager()
-    print(color_manager.color(msg="Hello!", color="green", background="green"))
+    pass

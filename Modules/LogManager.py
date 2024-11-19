@@ -66,9 +66,4 @@ class Log:
 
 
 if __name__ == '__main__':
-    log = Log('test.log')
-    log.debug('debug')
-    log.info('info')
-    log.warn('warn')
-    log.error('error')
-    log.critical('critical')
+    pass

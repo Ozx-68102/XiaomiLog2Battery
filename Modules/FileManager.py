@@ -33,12 +33,13 @@ class FileManager:
                 self.log.info(log_info1)
                 print(log_info1)
 
-                while True:
+                ans = None
+
+                while ans not in ["y", "n"]:
                     log_debug1 = "Do you want to overwrite it ([y]/n)?"
                     self.log.debug(log_debug1)
                     ans = input(log_debug1).lower()
-                    if len(ans) == 0:
-                        ans = "y"
+                    ans = "y" if len(ans) == 0 else ans
                     self.log.info(f"User input: {ans}")
 
                     if ans == "y":
@@ -65,7 +66,6 @@ class FileManager:
                     else:
                         log_warn = "Invalid input. Please try again."
                         self.log.warn(log_warn)
-                        continue
             else:
                 try:
                     os.makedirs(self.path, exist_ok=True)
@@ -77,6 +77,51 @@ class FileManager:
             os.makedirs(self.path)
             self.log.debug("Directory created successfully.")
             return self.path
+
+    def file_recognition(
+            self,
+            path: str,
+            exclude_dir: list[str] | tuple[str] = (".git", ".idea", ".venv", "__pycache__", "Modules", "temp"),
+            conditions: list[str] | tuple[str] = ("bugreport", ".zip"),
+    ) -> list | None:
+        """
+        Recognize the files in the specified path. If path does not exist, it will be created,
+         and you need to retry the program.
+        :param path: specified path
+        :param exclude_dir: the directories to exclude scanning
+        :param conditions: specified the beginning and end of the file name, only support 2 conditions
+        :return: Success => list[str], Failure => None
+        """
+        if not os.path.exists(path):
+            self.log.debug("Specified file does not exist.")
+            self.create_dir(path, ignore_tips=True)
+            self.log.debug("Specified file has been created.")
+            self.log.info(f"Initialize accomplished. Please put your files in {path} directory and try again.")
+            return None
+
+        files_list = []
+        for root, dirs, files in os.walk(path):
+            dirs[:] = [d for d in dirs if d not in exclude_dir]
+
+            if len(conditions) > 2 or len(conditions) < 2:
+                log_error1 = (f"'file_recognition' expects to receive 2 conditions,"
+                              f" but there {"is" if len(conditions) == 1 else "are"} conditions.")
+                self.log.error(log_error1)
+                return None
+
+            for file in files:
+                if file.startswith(conditions[0]) and file.endswith(conditions[1]):
+                    files_list.append(os.path.join(root, file))
+
+        if len(files_list) == 0:
+            log_warn1 = f"The specified path {path} does not contain any files."
+            self.log.warn(log_warn1)
+            return None
+        elif len(files_list) > 0:
+            log_info = f"{len(files_list)} files were found."
+            self.log.info(log_info)
+
+        return files_list
 
     def delete_dir(self, path: str, called_by_cmd: bool = True) -> True | False:
         self.log.debug(f"The argument of parameter 'called_by_cmd' is {called_by_cmd}.")
@@ -107,6 +152,4 @@ class FileManager:
 
 
 if __name__ == "__main__":
-    file_manager = FileManager(os.getcwd())
-    file_manager.create_dir(path=r"../temp")
-    file_manager.delete_dir(path=r"../temp")
+    pass
