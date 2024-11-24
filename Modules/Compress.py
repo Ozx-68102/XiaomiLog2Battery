@@ -45,7 +45,6 @@ class Compressing:
             self.log.warn(log_warn1)
             return None
 
-        step = 1
         zipfile_count = 0
 
         if os.path.exists(self.basic_temp_path):
@@ -59,6 +58,7 @@ class Compressing:
         processed_files = []
 
         for fp in filepath:
+            step = 1
             if not fp.startswith("bugreport") and not fp.endswith(".zip"):
                 log_warn1 = f"No log file from Xiaomi was found. Path:{fp}."
                 self.log.warn(log_warn1)
@@ -168,14 +168,14 @@ class Compressing:
                 time.sleep(0.07)
 
                 while ans not in ["y", "n"]:
-                    ans = input("Do you want to overwrite it ([y]/n):").lower()
+                    ans = input("Do you want to overwrite it all ([y]/n):").lower()
                     ans = "y" if len(ans) == 0 else ans
                     log_debug1 = f"User input : {ans}"
                     self.log.debug(log_debug1)
                     if ans == "y":
                         filecount = 1
                         for dst_path, src_path in to_overwrite_files:
-                            if self.__movefile(dst_path, src_path, filecount):
+                            if self.__movefile(sp=src_path, dp=dst_path, count=filecount):
                                 processed_files.append(dst_path)
 
                             filecount = filecount + 1 if filecount < num else num
@@ -220,7 +220,7 @@ class Compressing:
                         self.log.debug(log_debug2)
 
                         if ans == "y":
-                            if self.__movefile(src_path, dst_path, filecount):
+                            if self.__movefile(sp=src_path, dp=dst_path, count=filecount):
                                 processed_files.append(dst_path)
 
                             filecount = filecount + 1 if filecount < num else num

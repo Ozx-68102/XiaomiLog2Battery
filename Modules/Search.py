@@ -51,16 +51,16 @@ class Searching:
                 log_debug1 = f"Log was read successfully. Path:{fp}"
                 self.log.debug(log_debug1)
             except OSError as e:
-                log_error = f"An error occurred while opening a file. Details: {e.strerror} Path:{fp}"
+                log_error = f"An error occurred while opening a file. Details: {e.strerror}, Path:{fp}."
                 self.log.error(log_error)
                 continue
             except ValueError as e:
-                log_error = f"An ValueError occurred while opening a file. Details: {e}"
+                log_error = f"An ValueError occurred while opening a file. Details: {e}."
                 self.log.error(log_error)
                 continue
 
             battery_info = {}
-            bi_keyname = [
+            cap_keyname = [
                 "Estimated battery capacity", "Last learned battery capacity",
                 "Min learned battery capacity", "Max learned battery capacity"
             ]
@@ -69,14 +69,15 @@ class Searching:
             log_captured_time = time_process(log_time)
 
             battery_info["Log Captured Time"] = str(log_captured_time)
-            battery_info[bi_keyname[0]] = battery_capacity_info(bi_keyname[0], content)
-            battery_info[bi_keyname[1]] = battery_capacity_info(bi_keyname[1], content)
-            battery_info[bi_keyname[2]] = battery_capacity_info(bi_keyname[2], content)
-            battery_info[bi_keyname[3]] = battery_capacity_info(bi_keyname[3], content)
+            battery_info[cap_keyname[0]] = battery_capacity_info(cap_keyname[0], content)
+            battery_info[cap_keyname[1]] = battery_capacity_info(cap_keyname[1], content)
+            battery_info[cap_keyname[2]] = battery_capacity_info(cap_keyname[2], content)
+            battery_info[cap_keyname[3]] = battery_capacity_info(cap_keyname[3], content)
 
-            match_battery_time = re.search(pattern=r"Battery time remaining: \s*([\w\s]+ms)", string=content)
-            if match_battery_time:
-                battery_info["Battery time remaining"] = match_battery_time.group(1)
+            # temporary disabled because it is not belonging to capacity class.
+            # match_battery_time = re.search(pattern=r"Battery time remaining: \s*([\w\s]+ms)", string=content)
+            # if match_battery_time:
+            #     battery_info["Battery time remaining"] = match_battery_time.group(1)
 
             log_debug2 = f"Battery info has caught: {battery_info}"
             self.log.debug(log_debug2)

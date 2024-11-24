@@ -20,6 +20,31 @@ class Recording:
         :param model: Internal code of your smartphone, such as Xiaomi 14's internal code is `Houji`.
         :return: Success => `str` , Failure => `None`
         """
+        def cc_file(p: str) -> str | None:
+            # "Battery time remaining" disabled temporary
+            columns = [
+                "Estimated battery capacity", "Last learned battery capacity",
+                "Min learned battery capacity", "Max learned battery capacity"
+            ]
+
+            try:
+                df = pd.DataFrame(columns=columns)
+                df.index.name = "Log Captured Time"
+                df.to_csv(p, index=True, header=True)
+                return p
+            except FileNotFoundError as er:
+                log_error = f"File not found: {er.strerror}"
+                self.log.error(log_error)
+                return None
+            except PermissionError as er:
+                log_error = f"Permission denied: {er.strerror}"
+                self.log.error(log_error)
+                return None
+            except OSError as er:
+                log_error = f"An error occurred: {er.strerror}"
+                self.log.error(log_error)
+                return None
+
         csv_dir_path = os.path.join(self.file_path, "recorded_data")
         if not os.path.exists(csv_dir_path):
             os.makedirs(csv_dir_path)
@@ -27,10 +52,6 @@ class Recording:
         name = "battery_info.csv"
         name = model + "_" + name if model is not None else name
         csv_path = os.path.join(csv_dir_path, name)
-        columns = [
-            "Estimated battery capacity", "Last learned battery capacity",
-            "Min learned battery capacity", "Max learned battery capacity", "Battery time remaining"
-        ]
 
         if os.path.exists(csv_path):
             log_info1 = f"file {os.path.basename(csv_path)} have already exists."
@@ -50,12 +71,18 @@ class Recording:
                 if ans == "y":
                     try:
                         os.remove(csv_path)
-                        log_debug3 = f"File {os.path.basename(csv_path)} has been deleted."
-                        self.log.debug(log_debug3)
                     except PermissionError as e:
                         log_warn1 = f"Permission denied: {e.strerror}"
                         self.log.warn(log_warn1)
                         return None
+
+                    if cc_file(csv_path) is not None:
+                        log_info2 = f"File {os.path.basename(csv_path)} has been overwritten."
+                        self.log.info(log_info2)
+                        return csv_path
+                    else:
+                        return None
+
                 elif ans == "n":
                     log_info2 = f"File {os.path.basename(csv_path)} has been retained."
                     self.log.info(log_info2)
@@ -64,22 +91,11 @@ class Recording:
                     log_warn1 = "Invalid input. Please try again."
                     self.log.warn(log_warn1)
         else:
-            try:
-                df = pd.DataFrame(columns=columns)
-                df.index.name = "Log Captured Time"
-                df.to_csv(csv_path, index=True, header=True)
+            if cc_file(csv_path) is not None:
+                log_info1 = f"File {os.path.basename(csv_path)} has been created."
+                self.log.info(log_info1)
                 return csv_path
-            except FileNotFoundError as e:
-                log_warn1 = f"File not found: {e.strerror}"
-                self.log.warn(log_warn1)
-                return None
-            except PermissionError as e:
-                log_warn1 = f"Permission denied: {e.strerror}"
-                self.log.warn(log_warn1)
-                return None
-            except OSError as e:
-                log_warn1 = f"An error occurred: {e.strerror}"
-                self.log.warn(log_warn1)
+            else:
                 return None
 
     def __import_data(self, dataf: pd.DataFrame, csv_p: str) -> bool:
@@ -102,7 +118,7 @@ class Recording:
         self.log.info(log_info1)
         return True
 
-    def data_processing(self, data: dict | list[dict], csv_path: str) -> None | pd.DataFrame:
+    def data_processing(self, data: dict | list[dict], csv_path: str) -> None | str:
         def check_keys(d: dict) -> bool:
             columns_pre = [
                 "Log Captured Time", "Estimated battery capacity", "Last learned battery capacity",
@@ -130,8 +146,9 @@ class Recording:
 
         elif isinstance(data, list):
             if not all(isinstance(d, dict) for d in data):
-                raise TypeError(f"The type of 'data' variable expect to receive a dict or a list of dict,"
-                                f" but it is {type(data).__name__}.")
+                temsg = (f"TypeError: The type of 'data' variable expect to receive a dict or a list of dict, "
+                         f"not {type(data).__name__}.")
+                raise TypeError(temsg)
 
             if not all(check_keys(d) for d in data):
                 return None
@@ -140,8 +157,9 @@ class Recording:
             df.set_index("Log Captured Time", inplace=True)
 
         else:
-            raise TypeError(f"The type of 'data' variable expect to receive a dict or a list of dict,"
-                            f" but it is {type(data).__name__}.")
+            temsg = (f"TypeError: The type of 'data' variable expect to receive a dict or a list of dict, "
+                     f"not {type(data).__name__}.")
+            raise TypeError(temsg)
 
         csv_data = pd.read_csv(csv_path, index_col="Log Captured Time")
 
@@ -149,7 +167,7 @@ class Recording:
             log_info1 = "csv file is empty. So now is preparing to import data."
             self.log.info(log_info1)
             if self.__import_data(df, csv_path):
-                return df
+                return csv_path
             else:
                 return None
 
@@ -165,11 +183,10 @@ class Recording:
         updated_data = pd.concat([new_data, csv_data])
 
         if self.__import_data(updated_data, csv_path):
-            return updated_data
+            return csv_path
         else:
             return None
 
 
 if __name__ == "__main__":
     pass
-
