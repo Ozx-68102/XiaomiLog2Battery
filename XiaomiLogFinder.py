@@ -9,12 +9,13 @@ from Modules.Search import Searching
 from Modules.Visualization import Visualizing
 
 
-def judge_none(
-        f: list | str | None,
-        typ: Literal["compressed file", "Xiaomi log file", "battery information", "csv file"]
+def check_error(
+        f: list | str | bool | None,
+        typ: Literal["compressed file", "Xiaomi log file", "battery information", "csv file", "line chart"]
 ) -> None:
+    a = ["compressed file", "Xiaomi log file", "battery information", "csv file", "line chart"]
     try:
-        if typ not in (a := ["compressed file", "Xiaomi log file", "battery information", "csv file"]):
+        if typ not in a:
             emsg1 = f"ValueError: 'typ' must be one of '{a[0]}', '{a[1]}', '{a[2]}' or {a[3]}, not '{typ}'."
             raise ValueError(emsg1)
 
@@ -28,8 +29,8 @@ def judge_none(
                     log.error(log_error)
                     exit(1)
         elif isinstance(f, list):
-            if typ == a[3]:
-                emsg3 = f"ValueError: When the type of 'f' is a list, 'typ' cannot be '{a[3]}'."
+            if typ == a[3] or typ == a[4]:
+                emsg3 = f"ValueError: When the type of 'f' is a list, 'typ' cannot be '{typ}'."
                 raise ValueError(emsg3)
             else:
                 n = len(f)
@@ -41,8 +42,16 @@ def judge_none(
                     log_error = f"No {typ} was found."
                     log.error(log_error)
                     exit(1)
+        elif isinstance(f, bool):
+            if typ != a[4]:
+                emsg4 = f"ValueError: When the type of 'f' is a bool, 'typ' must be '{a[4]}', not '{typ}'."
+                raise ValueError(emsg4)
+            else:
+                if not f:
+                    emsg5 = "Failed to visualize battery information."
+                    raise ValueError(emsg5)
         else:
-            emsg4 = f"ValueError: Variable 'f' must be a list or a string, not '{f}'."
+            emsg4 = f"ValueError: Variable 'f' must be a list, a string or a bool, not '{f}'."
             raise ValueError(emsg4)
     except ValueError as e:
         log.error(str(e))
@@ -52,25 +61,23 @@ def judge_none(
 def main(cr):
     fm = FileManager(cr)
     zip_filelist = fm.file_recognition(os.path.join(cr, "zips"))
-    judge_none(zip_filelist, "compressed file")
+    check_error(zip_filelist, "compressed file")
 
     cp = Compressing(cr)
     p = cp.find_xiaomi_log(cp.compress_xiaomi_log(zip_filelist))
-    judge_none(p, "Xiaomi log file")
+    check_error(p, "Xiaomi log file")
 
     sear = Searching(cr)
     infos = sear.search_info(p)
-    judge_none(infos, "battery information")
+    check_error(infos, "battery information")
 
     rec = Recording(cr)
-    judge_none(csv_p := rec.create_csv(), "csv file")
-    judge_none(rec.data_processing(infos, csv_p), "csv file")
+    check_error(csv_p := rec.create_csv(), "csv file")
+    check_error(rec.data_processing(infos, csv_p), "csv file")
 
     visu = Visualizing(cr)
-    if not visu.pline_chart(csv_p):
-        # TODO: merge into the func
-        log.error("Failed to visualize battery information.")
-        exit(1)
+    vpc = visu.pline_chart(csv_p)
+    check_error(vpc, "line chart")
 
 
 current = os.getcwd()

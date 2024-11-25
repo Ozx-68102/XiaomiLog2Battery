@@ -55,7 +55,11 @@ class Searching:
                 self.log.error(log_error)
                 continue
             except ValueError as e:
-                log_error = f"An ValueError occurred while opening a file. Details: {e}."
+                log_error = f"An ValueError occurred while opening a file. Details: {str(e)}."
+                self.log.error(log_error)
+                continue
+            except Exception as e:
+                log_error = f"An error occurred while opening a file. Details: {str(e)}."
                 self.log.error(log_error)
                 continue
 

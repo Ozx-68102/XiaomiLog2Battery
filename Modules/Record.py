@@ -33,16 +33,20 @@ class Recording:
                 df.to_csv(p, index=True, header=True)
                 return p
             except FileNotFoundError as er:
-                log_error = f"File not found: {er.strerror}"
-                self.log.error(log_error)
+                log_error_c = f"File not found: {er.strerror}"
+                self.log.error(log_error_c)
                 return None
             except PermissionError as er:
-                log_error = f"Permission denied: {er.strerror}"
-                self.log.error(log_error)
+                log_error_c = f"Permission denied: {er.strerror}"
+                self.log.error(log_error_c)
                 return None
             except OSError as er:
-                log_error = f"An error occurred: {er.strerror}"
-                self.log.error(log_error)
+                log_error_c = f"An error occurred while creating a DataFrame: {er.strerror}"
+                self.log.error(log_error_c)
+                return None
+            except Exception as er:
+                log_error_c = f"An error occurred while creating a DataFrame: {str(er)}"
+                self.log.error(log_error_c)
                 return None
 
         csv_dir_path = os.path.join(self.file_path, "recorded_data")
@@ -72,8 +76,20 @@ class Recording:
                     try:
                         os.remove(csv_path)
                     except PermissionError as e:
-                        log_warn1 = f"Permission denied: {e.strerror}"
-                        self.log.warn(log_warn1)
+                        log_error = f"Permission denied: {e.strerror}"
+                        self.log.error(log_error)
+                        return None
+                    except FileNotFoundError as e:
+                        log_error = f"File not found: {e.strerror}"
+                        self.log.error(log_error)
+                        return None
+                    except OSError as e:
+                        log_error = f"An error occurred while remove csv file: {e.strerror}"
+                        self.log.error(log_error)
+                        return None
+                    except Exception as e:
+                        log_error = f"An error occurred while remove csv file: {str(e)}"
+                        self.log.error(log_error)
                         return None
 
                     if cc_file(csv_path) is not None:
@@ -102,16 +118,20 @@ class Recording:
         try:
             dataf.to_csv(csv_p, index=True, header=True)
         except FileNotFoundError as e:
-            log_warn1 = f"File not found: {e.strerror}"
-            self.log.warn(log_warn1)
+            log_warn = f"File not found: {e.strerror}"
+            self.log.warn(log_warn)
             return False
         except PermissionError as e:
-            log_warn1 = f"Permission denied: {e.strerror}"
-            self.log.warn(log_warn1)
+            log_warn = f"Permission denied: {e.strerror}"
+            self.log.warn(log_warn)
             return False
         except OSError as e:
-            log_warn1 = f"An error occurred: {e.strerror}"
-            self.log.warn(log_warn1)
+            log_warn = f"An error occurred: {e.strerror}"
+            self.log.warn(log_warn)
+            return False
+        except Exception as e:
+            log_warn = f"An error occurred: {str(e)}"
+            self.log.warn(log_warn)
             return False
 
         log_info1 = f"Data imported successfully. Path:{csv_p}"

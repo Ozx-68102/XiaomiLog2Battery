@@ -124,29 +124,43 @@ class FileManager:
         return files_list
 
     def delete_dir(self, path: str, called_by_cmd: bool = True) -> True | False:
-        self.log.debug(f"The argument of parameter 'called_by_cmd' is {called_by_cmd}.")
+        log_debug1 = f"called_by_cmd={called_by_cmd}."
+        self.log.debug(log_debug1)
+
         self.path = path
         self.__empty_path()
 
         if not os.path.exists(self.path):
             if not called_by_cmd:
-                self.log.error("Directory does not exist.")
+                log_error1 = "Directory does not exist."
+                self.log.error(log_error1)
 
             return False
 
         try:
             shutil.rmtree(self.path)
-        except FileNotFoundError:
-            self.log.warn(f"No such directory: {self.path}.")
+        except FileNotFoundError as e:
+            log_warn = f"File not found: {e.strerror}"
+            self.log.warn(log_warn)
+        except PermissionError as e:
+            log_warn = f"Permission error: {e.strerror}"
+            self.log.warn(log_warn)
+        except shutil.Error as e:
+            log_warn = f"An error occurred while delete a directory: {e.strerror}"
+            self.log.warn(log_warn)
         except OSError as e:
-            self.log.warn(f"OSError: {e.strerror}.")
+            log_warn = f"An error occurred while delete a directory: {e.strerror}."
+            self.log.warn(log_warn)
+        except Exception as e:
+            log_warn = f"An error occurred while delete a directory: {str(e)}."
+            self.log.warn(log_warn)
 
         if not called_by_cmd:
             log_info = "Directory deleted successfully."
             self.log.info(log_info)
         else:
-            log_debug = "Directory deleted successfully."
-            self.log.debug(log_debug)
+            log_debug2 = "Directory deleted successfully."
+            self.log.debug(log_debug2)
 
         return True
 

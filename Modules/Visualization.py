@@ -14,10 +14,16 @@ class Visualizing:
                 if not os.path.exists(path):
                     os.makedirs(path)
             except PermissionError as e:
-                self.log.error(f"Permission Error: {e.strerror}")
+                log_error = f"Permission Error: {e.strerror}"
+                self.log.error(log_error)
                 return None
             except OSError as e:
-                self.log.error(f"An error occurred while creating directory: {e.strerror}")
+                log_error = f"An error occurred while creating directory: {e.strerror}"
+                self.log.error(log_error)
+                return None
+            except Exception as e:
+                log_error = f"An error occurred while creating directory: {str(e)}"
+                self.log.error(log_error)
                 return None
 
             return path
@@ -50,6 +56,10 @@ class Visualizing:
             log_error = f"Parser Error. Detail: {str(e)}"
             self.log.error(log_error)
             return None
+        except Exception as e:
+            log_error = f"An error occurred while reading data. Detail: {str(e)}"
+            self.log.error(log_error)
+            return None
 
         return p2df
 
@@ -66,7 +76,6 @@ class Visualizing:
         return p2df
 
     def pline_chart(self, path: str | None = None) -> bool:
-        # TODO: Lack of some debug log
         df = self.__read_data("battery_info.csv" if path is None else os.path.basename(path))
         df = self.__data_filter(df) if df is not None else df
 
@@ -85,26 +94,41 @@ class Visualizing:
         min_lbc_df = pd.DataFrame(df.loc[:, cols[2]])
         max_lbc_df = pd.DataFrame(df.loc[:, cols[3]])
 
+        log_debug1 = (f"DataFrames were set. Detail: Estimated={ebc_df.shape[0]}, Last Learned={l2bc_df.shape[0]},"
+                      f"Min Learned={min_lbc_df.shape[0]}, Max Learned={max_lbc_df.shape[0]}")
+        self.log.debug(log_debug1)
+
         plt.figure(figsize=(10, 6))
 
-        plt.plot(df["Log Captured Time"], ebc_df[cols[0]], label=cols[0], color="blue")
-        plt.plot(df["Log Captured Time"], l2bc_df[cols[1]], label=cols[1], color="green")
-        plt.plot(df["Log Captured Time"], min_lbc_df[cols[2]], label=cols[2], color="red")
-        plt.plot(df["Log Captured Time"], max_lbc_df[cols[3]], label=cols[3], color="orange")
+        lc_time = df["Log Captured Time"]
+        plt.plot(lc_time, ebc_df[cols[0]], label=cols[0], color="blue")
+        plt.plot(lc_time, l2bc_df[cols[1]], label=cols[1], color="green")
+        plt.plot(lc_time, min_lbc_df[cols[2]], label=cols[2], color="red")
+        plt.plot(lc_time, max_lbc_df[cols[3]], label=cols[3], color="orange")
 
         plt.grid(True)
         plt.gca().yaxis.set_major_locator(MultipleLocator(25))
         plt.gca().xaxis.set_major_locator(MultipleLocator(1))
 
+        log_debug2 = f"The grid of line chart was enabled. "
+        self.log.debug(log_debug2)
+
         plt.xlabel("Log Captured Time")
         plt.ylabel("Capacities(mAh)")
         plt.title("Battery Capacities Over Time")
+        log_debug3 = (f"X axis label: 'Log Captured Time', Y axis label: 'Capacities(mAh)',"
+                      f" title: 'Battery Capacities Over Time'")
+        self.log.debug(log_debug3)
 
         plt.legend()
         plt.xticks(rotation=90)
         plt.tight_layout()
+        log_debug4 = f"Enabled: legend, xticks(rotation=90), tight_layout()"
+        self.log.debug(log_debug4)
 
-        plt.savefig(os.path.join(self.png_path, "battery_capacity.png"), dpi=1200)
+        plt.savefig(p := (os.path.join(self.png_path, "battery_capacity.png")), dpi=1200)
+        log_debug5 = f"Image have been saved at {p}."
+        self.log.debug(log_debug5)
 
         plt.show()
 
@@ -112,7 +136,4 @@ class Visualizing:
 
 
 if __name__ == "__main__":
-    # print(os.path.basename(os.path.join(os.getcwd(), "A.py")))
-    a = os.path.dirname(os.getcwd())
-    v = Visualizing(a)
-    v.pline_chart()
+    pass
