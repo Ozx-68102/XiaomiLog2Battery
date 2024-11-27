@@ -1,6 +1,7 @@
 import os
-import pandas as pd
 import time
+
+import pandas as pd
 
 from Modules.LogManager import Log
 
@@ -14,57 +15,48 @@ class Recording:
             os.makedirs(self.log_path)
         self.log = Log(path=os.path.join(self.log_path, "RecordingLog.txt"))
 
-    def create_csv(self, model: str | None = None) -> None | str:
-        """
-        Create a csv file in "recorded_data" directory.
-        :param model: Internal code of your smartphone, such as Xiaomi 14's internal code is `Houji`.
-        :return: Success => `str` , Failure => `None`
-        """
-        def cc_file(p: str) -> str | None:
-            # "Battery time remaining" disabled temporary
-            columns = [
-                "Estimated battery capacity", "Last learned battery capacity",
-                "Min learned battery capacity", "Max learned battery capacity"
-            ]
+    def __df2csv(self, path: str):
+        # "Battery time remaining" disabled temporary
+        columns = [
+            "Estimated battery capacity", "Last learned battery capacity",
+            "Min learned battery capacity", "Max learned battery capacity",
+            "phone_brand", "nickname", "system_version"
+        ]
 
-            try:
-                df = pd.DataFrame(columns=columns)
-                df.index.name = "Log Captured Time"
-                df.to_csv(p, index=True, header=True)
-                return p
-            except FileNotFoundError as er:
-                log_error_c = f"File not found: {er.strerror}"
-                self.log.error(log_error_c)
-                return None
-            except PermissionError as er:
-                log_error_c = f"Permission denied: {er.strerror}"
-                self.log.error(log_error_c)
-                return None
-            except OSError as er:
-                log_error_c = f"An error occurred while creating a DataFrame: {er.strerror}"
-                self.log.error(log_error_c)
-                return None
-            except Exception as er:
-                log_error_c = f"An error occurred while creating a DataFrame: {str(er)}"
-                self.log.error(log_error_c)
-                return None
+        try:
+            df = pd.DataFrame(columns=columns)
+            df.index.name = "Log Captured Time"
+            df.to_csv(path, index=True, header=True)
+            return path
+        except FileNotFoundError as er:
+            log_error_c = f"File not found: {er.strerror}"
+            self.log.error(log_error_c)
+            return None
+        except PermissionError as er:
+            log_error_c = f"Permission denied: {er.strerror}"
+            self.log.error(log_error_c)
+            return None
+        except OSError as er:
+            log_error_c = f"An error occurred while creating a DataFrame: {er.strerror}"
+            self.log.error(log_error_c)
+            return None
+        except Exception as er:
+            log_error_c = f"An error occurred while creating a DataFrame: {str(er)}"
+            self.log.error(log_error_c)
+            return None
 
-        csv_dir_path = os.path.join(self.file_path, "recorded_data")
-        if not os.path.exists(csv_dir_path):
-            os.makedirs(csv_dir_path)
-
-        name = "battery_info.csv"
-        name = model + "_" + name if model is not None else name
-        csv_path = os.path.join(csv_dir_path, name)
+    def __crt_file_centre(self, mdl: str, cdp: str) -> str | None:
+        name = f"{mdl}_xiaomi_log_info.csv"
+        csv_path = os.path.join(cdp, name)
 
         if os.path.exists(csv_path):
-            log_info1 = f"file {os.path.basename(csv_path)} have already exists."
+            log_info1 = f"file {name} have already exists."
             self.log.info(log_info1)
             time.sleep(0.01)
-            ans = None
 
+            ans = None
             while ans not in ["y", "n"]:
-                log_debug1 = "Do you want to overwrite this file ([y]/n):"
+                log_debug1 = f"Do you want to overwrite {name} ([y]/n):"
                 self.log.debug(log_debug1)
                 ans = input(log_debug1).lower()
                 ans = "y" if len(ans) == 0 else ans
@@ -75,24 +67,24 @@ class Recording:
                 if ans == "y":
                     try:
                         os.remove(csv_path)
-                    except PermissionError as e:
-                        log_error = f"Permission denied: {e.strerror}"
+                    except PermissionError as ecp:
+                        log_error = f"Permission error: {ecp.strerror}"
                         self.log.error(log_error)
                         return None
-                    except FileNotFoundError as e:
-                        log_error = f"File not found: {e.strerror}"
+                    except FileNotFoundError as ecp:
+                        log_error = f"File not found: {ecp.strerror}"
                         self.log.error(log_error)
                         return None
-                    except OSError as e:
-                        log_error = f"An error occurred while remove csv file: {e.strerror}"
+                    except OSError as ecp:
+                        log_error = f"An error occurred while remove csv file: {ecp.strerror}"
                         self.log.error(log_error)
                         return None
-                    except Exception as e:
-                        log_error = f"An error occurred while remove csv file: {str(e)}"
+                    except Exception as ecp:
+                        log_error = f"An error occurred while remove csv file: {str(ecp)}"
                         self.log.error(log_error)
                         return None
 
-                    if cc_file(csv_path) is not None:
+                    if self.__df2csv(csv_path) is not None:
                         log_info2 = f"File {os.path.basename(csv_path)} has been overwritten."
                         self.log.info(log_info2)
                         return csv_path
@@ -107,87 +99,139 @@ class Recording:
                     log_warn1 = "Invalid input. Please try again."
                     self.log.warn(log_warn1)
         else:
-            if cc_file(csv_path) is not None:
+            if self.__df2csv(csv_path) is not None:
                 log_info1 = f"File {os.path.basename(csv_path)} has been created."
                 self.log.info(log_info1)
                 return csv_path
             else:
                 return None
 
+    def create_csv(self, model: str | set[str | float] | None = None) -> str | list[str] | None:
+        """
+        Create a csv file in "recorded_data" directory.
+        :param model: Internal code of your smartphone, such as Xiaomi 14's internal code is `Houji`.
+        :return: Success => `str` , Failure => `None`
+        """
+        if not isinstance(model, str) and not isinstance(model, set):
+            try:
+                ve_msg = f"ValueError: 'model' expected to receive a string or a set, not '{type(model).__name__}'."
+                raise ValueError(ve_msg)
+            except ValueError as e:
+                self.log.error(str(e))
+                return None
+
+        csv_dir_path = os.path.join(self.file_path, "recorded_data")
+        if not os.path.exists(csv_dir_path):
+            os.makedirs(csv_dir_path)
+
+        if isinstance(model, set):
+            paths = []
+            for md in model:
+                cp = self.__crt_file_centre(md, csv_dir_path)
+                paths.append(cp if cp is not None else "")
+            return paths
+        elif isinstance(model, str):
+            return self.__crt_file_centre(model, csv_dir_path)
+
+    def __check_keys(self, data: dict) -> bool:
+        columns_pre = [
+            "Log Captured Time", "Estimated battery capacity", "Last learned battery capacity",
+            "Min learned battery capacity", "Max learned battery capacity", "phone_brand", "nickname", "system_version"
+        ]
+        missing_keys = [key for key in columns_pre if key not in data]
+        if missing_keys:
+            log_error_ck = f"missing keys: {missing_keys}"
+            self.log.error(log_error_ck)
+            return False
+        else:
+            return True
+
     def __import_data(self, dataf: pd.DataFrame, csv_p: str) -> bool:
         try:
             dataf.to_csv(csv_p, index=True, header=True)
-        except FileNotFoundError as e:
-            log_warn = f"File not found: {e.strerror}"
-            self.log.warn(log_warn)
-            return False
         except PermissionError as e:
-            log_warn = f"Permission denied: {e.strerror}"
-            self.log.warn(log_warn)
+            log_error = f"Permission denied while importing data: {e.strerror}."
+            self.log.error(log_error)
             return False
         except OSError as e:
-            log_warn = f"An error occurred: {e.strerror}"
-            self.log.warn(log_warn)
+            log_error = f"An error occurred while importing data: {e.strerror}. Path:{csv_p}."
+            self.log.error(log_error)
             return False
         except Exception as e:
-            log_warn = f"An error occurred: {str(e)}"
-            self.log.warn(log_warn)
+            log_error = f"An error occurred while importing data: {str(e)}. Path:{csv_p}."
+            self.log.error(log_error)
             return False
 
-        log_info1 = f"Data imported successfully. Path:{csv_p}"
+        log_info1 = f"Data imported successfully. Path:{csv_p}."
         self.log.info(log_info1)
         return True
 
-    def data_processing(self, data: dict | list[dict], csv_path: str) -> None | str:
-        def check_keys(d: dict) -> bool:
-            columns_pre = [
-                "Log Captured Time", "Estimated battery capacity", "Last learned battery capacity",
-                "Min learned battery capacity", "Max learned battery capacity"
-            ]
-            missing_keys = [key for key in columns_pre if key not in d]
-            if missing_keys:
-                log_warn = f"missing keys: {missing_keys}"
-                self.log.warn(log_warn)
-                return False
+    def __dp2(self, dts: dict | list[dict], cp: str) -> str | None:
+        nickname = os.path.basename(cp).split("_", 1)[0]
+        if isinstance(dts, dict):
+            if not self.__check_keys(dts):
+                return None
+
+            dts = dts if dts["nickname"] == nickname else None
+            if dts:
+                df = pd.DataFrame(dts, index=[dts["Log Captured Time"]]).drop(dts["Log Captured Time"], axis=1)
+                df.index.name = "Log Captured Time"
             else:
-                return True
-
-        if csv_path.isspace():
-            log_error = "'csv_path' is empty."
-            self.log.error(log_error)
-            return None
-
-        if isinstance(data, dict):
-            if not check_keys(data):
+                log_error = f"No valid data was found for {nickname}."
+                self.log.error(log_error)
                 return None
 
-            df = pd.DataFrame(data, index=[data["Log Captured Time"]]).drop(data["Log Captured Time"], axis=1)
-            df.index.name = "Log Captured Time"
+        elif isinstance(dts, list):
+            if not all(isinstance(d, dict) for d in dts):
+                try:
+                    temsg = (f"TypeError: The type of 'data' variable expect to receive a dict or a list of dict, "
+                             f"not {type(dts).__name__}.")
+                    raise TypeError(temsg)
+                except TypeError as e:
+                    self.log.error(str(e))
+                    return None
 
-        elif isinstance(data, list):
-            if not all(isinstance(d, dict) for d in data):
-                temsg = (f"TypeError: The type of 'data' variable expect to receive a dict or a list of dict, "
-                         f"not {type(data).__name__}.")
-                raise TypeError(temsg)
-
-            if not all(check_keys(d) for d in data):
+            if not all(self.__check_keys(d) for d in dts):
                 return None
 
-            df = pd.DataFrame(data)
-            df.set_index("Log Captured Time", inplace=True)
+            dts = [dt for dt in dts if dt["nickname"] == nickname]
+            if dts:
+                df = pd.DataFrame(dts)
+                df.set_index("Log Captured Time", inplace=True)
+            else:
+                log_error = f"No valid data was found for {nickname}."
+                self.log.error(log_error)
+                return None
 
         else:
-            temsg = (f"TypeError: The type of 'data' variable expect to receive a dict or a list of dict, "
-                     f"not {type(data).__name__}.")
-            raise TypeError(temsg)
+            try:
+                temsg = (f"TypeError: The type of 'data' variable expect to receive a dict or a list of dict, "
+                         f"not {type(dts).__name__}.")
+                raise TypeError(temsg)
+            except TypeError as e:
+                self.log.error(str(e))
+                return None
 
-        csv_data = pd.read_csv(csv_path, index_col="Log Captured Time")
+        try:
+            csv_data = pd.read_csv(cp, index_col="Log Captured Time")
+        except pd.errors.EmptyDataError as e:
+            log_error = f"The data of specified csv file is empty: {str(e)}. Path:{cp}."
+            self.log.error(log_error)
+            return None
+        except pd.errors.ParserError as e:
+            log_error = f"Parser error while reading csv file: {str(e)}. Path:{cp}."
+            self.log.error(log_error)
+            return None
+        except FileNotFoundError as e:
+            log_error = f"File not found: {str(e)}."
+            self.log.error(log_error)
+            return None
 
         if csv_data.shape[0] == 0:
             log_info1 = "csv file is empty. So now is preparing to import data."
             self.log.info(log_info1)
-            if self.__import_data(df, csv_path):
-                return csv_path
+            if self.__import_data(df, cp):
+                return cp
             else:
                 return None
 
@@ -196,16 +240,28 @@ class Recording:
         new_data = df.loc[~df.index.isin(copy_index)]
 
         if new_data.empty:
-            log_warn1 = "No new unique data to insert."
-            self.log.warn(log_warn1)
+            log_error = "No new unique data to insert."
+            self.log.error(log_error)
             return None
 
         updated_data = pd.concat([new_data, csv_data])
 
-        if self.__import_data(updated_data, csv_path):
-            return csv_path
+        if self.__import_data(updated_data, cp):
+            return cp
         else:
             return None
+
+    def data_processing(self, data: dict | list[dict], csv_path: str | list[str]) -> str | list[str] | None:
+        if isinstance(csv_path, str):
+            if csv_path.isspace():
+                log_error = "'csv_path' is empty."
+                self.log.error(log_error)
+                return None
+
+            return self.__dp2(data, csv_path)
+
+        elif isinstance(csv_path, list):
+            return [self.__dp2(data, cp) or "" for cp in csv_path]
 
 
 if __name__ == "__main__":

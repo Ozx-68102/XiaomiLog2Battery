@@ -28,14 +28,29 @@ def check_error(
                     log_error = f"No {typ} was created."
                     log.error(log_error)
                     exit(1)
+                else:
+                    log_debug = f"1 {typ} was created."
+                    log.debug(log_debug)
         elif isinstance(f, list):
-            if typ == a[3] or typ == a[4]:
-                emsg3 = f"ValueError: When the type of 'f' is a list, 'typ' cannot be '{typ}'."
-                raise ValueError(emsg3)
+            n = len(f)
+            if typ == a[4]:
+                count_t = sum(1 for ff in f if ff)
+                count_f = len(f) - count_t
+
+                log_info = (f"{count_t} {"file" if count_t == 1 else "files"} visualized successfully,"
+                            f" {count_f} {"file" if count_f == 1 else "files"} failed.")
+                log.info(log_info)
+            elif typ == a[3]:
+                if n == 0:
+                    log_error = f"No {typ} was created."
+                    log.error(log_error)
+                    exit(1)
+                else:
+                    log_debug = f"{n} {"csv file was" if n == 1 else "csv files were"} created."
+                    log.debug(log_debug)
             else:
-                n = len(f)
                 if n > 0:
-                    conditions = typ if (typ == a[2]) or (n == 1 and typ != a[2]) else typ + "s"
+                    conditions = typ if (typ == a[2]) or (n == 1 and typ != a[2]) else (typ + "s")
                     log_debug = f"Found {n} {conditions}."
                     log.debug(log_debug)
                 else:
@@ -51,8 +66,8 @@ def check_error(
                     emsg5 = "Failed to visualize battery information."
                     raise ValueError(emsg5)
         else:
-            emsg4 = f"ValueError: Variable 'f' must be a list, a string or a bool, not '{f}'."
-            raise ValueError(emsg4)
+            emsg6 = f"ValueError: Variable 'f' must be a list, a string or a bool, not '{f}'."
+            raise ValueError(emsg6)
     except ValueError as e:
         log.error(str(e))
         exit(1)
@@ -71,13 +86,15 @@ def main(cr):
     infos = sear.search_info(p)
     check_error(infos, "battery information")
 
+    pnickname = {info["nickname"] for info in infos}
+
     rec = Recording(cr)
-    check_error(csv_p := rec.create_csv(), "csv file")
-    check_error(rec.data_processing(infos, csv_p), "csv file")
+    check_error(csv_ps := rec.create_csv(pnickname), "csv file")
+    check_error(rec.data_processing(infos, csv_ps), "csv file")
 
     visu = Visualizing(cr)
-    vpc = visu.pline_chart(csv_p)
-    check_error(vpc, "line chart")
+    count = [visu.pline_chart(csv_p) for csv_p in csv_ps]
+    check_error(count, "line chart")
 
 
 current = os.getcwd()

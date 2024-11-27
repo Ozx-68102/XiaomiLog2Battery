@@ -31,7 +31,6 @@ class FileManager:
                 log_info1 = ("Directory has already existed. If you want to overwrite it,"
                              " all the files under it will be deleted.")
                 self.log.info(log_info1)
-                print(log_info1)
 
                 ans = None
 
@@ -51,13 +50,21 @@ class FileManager:
                             self.log.info(log_info4)
                             
                             return self.path
-                        except shutil.Error as e:
-                            log_error1 = f"An error occurred: {e.strerror}"
-                            self.log.error(log_error1)
+                        except PermissionError as e:
+                            log_error = f"Permission error while overwriting the directory: {e.strerror}."
+                            self.log.error(log_error)
                             return None
-                        except os.error as e:
-                            log_error2 = f"An error occurred: {e.strerror}"
-                            self.log.error(log_error2)
+                        except FileNotFoundError as e:
+                            log_error = f"File not found while overwriting the directory: {e.strerror}."
+                            self.log.error(log_error)
+                            return None
+                        except (shutil.Error, OSError) as e:
+                            log_error = f"An error occurred while overwriting the directory: {e.strerror}."
+                            self.log.error(log_error)
+                            return None
+                        except Exception as e:
+                            log_error = f"An error occurred while overwriting the directory: {str(e)}."
+                            self.log.error(log_error)
                             return None
                     elif ans == "n":
                         log_info3 = "Directory has been retained."
@@ -71,11 +78,17 @@ class FileManager:
                     os.makedirs(self.path, exist_ok=True)
                     return self.path
                 except OSError as e:
-                    self.log.warn(e.strerror)
+                    log_error = f"An error occurred while creating the directory: {e.strerror}."
+                    self.log.error(log_error)
+                    return None
+                except Exception as e:
+                    log_error = f"An error occurred while creating the directory: {str(e)}."
+                    self.log.error(log_error)
                     return None
         else:
             os.makedirs(self.path)
-            self.log.debug("Directory created successfully.")
+            log_debug = "Directory created successfully."
+            self.log.debug(log_debug)
             return self.path
 
     def file_recognition(
@@ -113,12 +126,13 @@ class FileManager:
                 if file.startswith(conditions[0]) and file.endswith(conditions[1]):
                     files_list.append(os.path.join(root, file))
 
-        if len(files_list) == 0:
+        num = len(files_list)
+        if num == 0:
             log_warn1 = f"The specified path {path} does not contain any files."
             self.log.warn(log_warn1)
             return None
-        elif len(files_list) > 0:
-            log_info = f"{len(files_list)} files were found."
+        elif num > 0:
+            log_info = f"{num} {"file" if num == 1 else "files"} were found."
             self.log.info(log_info)
 
         return files_list
@@ -140,19 +154,16 @@ class FileManager:
         try:
             shutil.rmtree(self.path)
         except FileNotFoundError as e:
-            log_warn = f"File not found: {e.strerror}"
+            log_warn = f"File not found while deleting a directory: {e.strerror}"
             self.log.warn(log_warn)
         except PermissionError as e:
-            log_warn = f"Permission error: {e.strerror}"
+            log_warn = f"Permission error while deleting a directory: {e.strerror}"
             self.log.warn(log_warn)
-        except shutil.Error as e:
-            log_warn = f"An error occurred while delete a directory: {e.strerror}"
-            self.log.warn(log_warn)
-        except OSError as e:
-            log_warn = f"An error occurred while delete a directory: {e.strerror}."
+        except (shutil.Error, OSError) as e:
+            log_warn = f"An error occurred while deleting a directory: {e.strerror}"
             self.log.warn(log_warn)
         except Exception as e:
-            log_warn = f"An error occurred while delete a directory: {str(e)}."
+            log_warn = f"An error occurred while deleting a directory: {str(e)}."
             self.log.warn(log_warn)
 
         if not called_by_cmd:

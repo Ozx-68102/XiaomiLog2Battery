@@ -117,7 +117,7 @@ class Compressing:
             # Ensure this only happens after the second decompression is finished
             processed_files.extend([os.path.join(temp, file) for file in file_list])
 
-        log_info2 = f"Successfully compressed {len(filepath)} Xiaomi Log files."
+        log_info2 = f"Successfully compressed {len(filepath)} Xiaomi Log {"file" if len(filepath) == 1 else "files"}."
         self.log.info(log_info2)
         return processed_files
 
@@ -152,8 +152,18 @@ class Compressing:
                         log_info1 = f"Successfully found Xiaomi Log. Name: {os.path.basename(file)}"
                         self.log.info(log_info1)
                         processed_files.append(dst_path)
-                    except OSError as e:
-                        log_error1 = f"An error occurred: {e.strerror}"
+                    except FileNotFoundError as e:
+                        log_error1 = f"File not found: {e.strerror}."
+                        self.log.error(log_error1)
+                        self.__del_temp_dir()
+                        return None
+                    except (shutil.Error, OSError) as e:
+                        log_error1 = f"An error occurred while finding Xiaomi Log: {e.strerror}."
+                        self.log.error(log_error1)
+                        self.__del_temp_dir()
+                        return None
+                    except Exception as e:
+                        log_error1 = f"An error occurred while finding Xiaomi Log: {str(e)}."
                         self.log.error(log_error1)
                         self.__del_temp_dir()
                         return None
@@ -163,7 +173,7 @@ class Compressing:
             num = len(to_overwrite_files)
 
             if batch:
-                log_info2 = f"{num} files was found with the same name."
+                log_info2 = f"{num} {"file was" if num == 1 else "files were"} found with the same name."
                 self.log.info(log_info2)
                 time.sleep(0.07)
 
