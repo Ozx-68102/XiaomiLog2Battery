@@ -16,6 +16,7 @@ Main Program name: `XiaomiLogFinder.py`, only **English** is supported currently
 If debugging is necessary, updating the version of PyCharm to **2024.03** or the latest versions is recommended.<br />
 Those with outstanding abilities can ignore the above suggestions and make their own decisions. **:P**
 
+****
 ####  Python 库（包含Python内置库） <br /> Required Python Packages including built-in packages
 不分先后顺序。 In no particular order.
 - matplotlib
