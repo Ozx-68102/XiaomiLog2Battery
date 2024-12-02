@@ -122,8 +122,8 @@ class Visualizing:
         avg["AVG battery capacity"] = avg.mean(axis=1).astype(int)
 
         log_debug1 = (f"DataFrames were set. Detail: Estimated_line={ebc_df.shape[0]}, "
-                      f"Last Learned AVG={avg_last_learned.iloc[0]}, Min Learned={avg_min_learned.iloc[0]},"
-                      f" Max Learned={avg_max_learned.iloc[0]}, AVG={avg['AVG battery capacity'].iloc[0]}.")
+                      f"Last Learned AVG={avg_last_learned} mAh, Min Learned={avg_min_learned} mAh,"
+                      f" Max Learned={avg_max_learned} mAh, AVG={avg['AVG battery capacity'].iloc[0]} mAh.")
         self.log.debug(log_debug1)
 
         plt.figure(figsize=(10, 6))
@@ -185,10 +185,4 @@ class Visualizing:
 
 
 if __name__ == "__main__":
-    v = Visualizing(os.path.dirname(os.getcwd()))
-    b = []
-    for root, dirs, files in os.walk("../files/recorded_data"):
-        for file in files:
-            if file.endswith(".csv"):
-                b.append(file)
-    count = [v.pline_chart(path=csv_p) for csv_p in b]
+    pass

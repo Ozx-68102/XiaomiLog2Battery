@@ -4,7 +4,7 @@ import shutil
 import time
 import zipfile
 
-from Modules.FileProcess import FolderOperator
+from Modules.FileProcess.FolderOperator import FolderOperator
 from Modules.LogRecord import Log
 
 

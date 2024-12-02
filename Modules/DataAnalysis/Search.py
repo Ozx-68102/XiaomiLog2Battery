@@ -140,7 +140,4 @@ class Searching:
 
 
 if __name__ == "__main__":
-    a = os.path.dirname(os.getcwd())
-    searc = Searching(a)
-    b = searc.search_info(r"../files/bugreport-houji-AQ3A.240627.003-2024-10-15-11-54-45.txt")
-    print(b)
+    pass

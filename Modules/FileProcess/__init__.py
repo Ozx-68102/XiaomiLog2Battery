@@ -1,2 +1,2 @@
-from Compress import Compressing
-from FolderOperator import FolderOperator
+from Modules.FileProcess.Compress import Compressing
+from Modules.FileProcess.FolderOperator import FolderOperator

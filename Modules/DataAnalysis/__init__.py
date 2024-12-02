@@ -1,3 +1,3 @@
-from Record import Recording
-from Search import Searching
-from Visualization import Visualizing
+from Modules.DataAnalysis.Record import Recording
+from Modules.DataAnalysis.Search import Searching
+from Modules.DataAnalysis.Visualization import Visualizing

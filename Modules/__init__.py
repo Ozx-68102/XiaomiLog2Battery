@@ -1,3 +1,3 @@
-from DataAnalysis import Record, Search, Visualization
-from FileProcess import Compress, FolderOperator
-from LogRecord import LogSystem
+from Modules.DataAnalysis import Record, Search, Visualization
+from Modules.FileProcess import Compress, FolderOperator
+from Modules.LogRecord import LogSystem
