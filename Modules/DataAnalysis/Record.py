@@ -3,7 +3,7 @@ import time
 
 import pandas as pd
 
-from Modules.LogManager import Log
+from Modules.LogRecord import Log
 
 
 class Recording:
@@ -240,8 +240,8 @@ class Recording:
         new_data = df.loc[~df.index.isin(copy_index)]
 
         if new_data.empty:
-            log_error = "No new unique data to insert."
-            self.log.error(log_error)
+            log_warn = "No new unique data to insert."
+            self.log.warn(log_warn)
             return None
 
         updated_data = pd.concat([new_data, csv_data])

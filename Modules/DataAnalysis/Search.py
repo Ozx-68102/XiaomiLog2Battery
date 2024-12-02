@@ -1,7 +1,7 @@
 import os
 import re
 
-from Modules.LogManager import Log
+from Modules.LogRecord import Log
 
 
 class Searching:

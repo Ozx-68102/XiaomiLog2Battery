@@ -1,4 +1,4 @@
-class ColorManager:
+class ColorHandler:
     def __init__(self):
         self.basic_color = {
             "red": "\033[31m", "yellow": "\033[33m", "green": "\033[32m", "blue": "\033[34m",

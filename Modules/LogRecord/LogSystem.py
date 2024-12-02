@@ -1,12 +1,12 @@
 import logging
 
-from Modules.ColorManager import ColorManager
+from Modules.LogRecord import ColorHandler
 
 
 class StreamHandler(logging.StreamHandler):
     def __init__(self):
         super().__init__()
-        self.cm = ColorManager()
+        self.ch = ColorHandler()
 
     def emit(self, record):
         msg = self.format(record)
@@ -19,7 +19,7 @@ class StreamHandler(logging.StreamHandler):
         }
 
         if record.levelno in color_map:
-            msg = self.cm.color(msg, color=color_map[record.levelno])
+            msg = self.ch.color(msg, color=color_map[record.levelno])
 
         self.stream.write(msg + self.terminator)
         self.flush()
@@ -32,7 +32,7 @@ class Log:
         :param cmd_level: set stream logging level
         :param file_level: set file logging level
         """
-        self.cm = ColorManager()
+        self.ch = ColorHandler()
         self.logger = logging.getLogger(path)
         self.logger.setLevel(logging.DEBUG)
         file_formatter = logging.Formatter(fmt="[%(asctime)s] [%(levelname)s] %(message)s",

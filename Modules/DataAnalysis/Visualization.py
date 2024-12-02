@@ -5,7 +5,7 @@ import pandas as pd
 from matplotlib.ticker import MultipleLocator
 from typing import Literal
 
-from Modules.LogManager import Log
+from Modules.LogRecord import Log
 
 
 class Visualizing:
@@ -108,8 +108,22 @@ class Visualizing:
         min_lbc_df = pd.DataFrame(df.loc[:, cols[2]])
         max_lbc_df = pd.DataFrame(df.loc[:, cols[3]])
 
-        log_debug1 = (f"DataFrames were set. Detail: Estimated={ebc_df.shape[0]}, Last Learned={l2bc_df.shape[0]},"
-                      f"Min Learned={min_lbc_df.shape[0]}, Max Learned={max_lbc_df.shape[0]}")
+        avg_last_learned = l2bc_df[cols[1]].mean().astype(int)
+        avg_min_learned = min_lbc_df[cols[2]].mean().astype(int)
+        avg_max_learned = max_lbc_df[cols[3]].mean().astype(int)
+
+        avg_df = {
+            "Last learned battery capacity": [avg_last_learned],
+            "Min learned battery capacity": [avg_min_learned],
+            "Max learned battery capacity": [avg_max_learned]
+        }
+
+        avg = pd.DataFrame(avg_df)
+        avg["AVG battery capacity"] = avg.mean(axis=1).astype(int)
+
+        log_debug1 = (f"DataFrames were set. Detail: Estimated_line={ebc_df.shape[0]}, "
+                      f"Last Learned AVG={avg_last_learned.iloc[0]}, Min Learned={avg_min_learned.iloc[0]},"
+                      f" Max Learned={avg_max_learned.iloc[0]}, AVG={avg['AVG battery capacity'].iloc[0]}.")
         self.log.debug(log_debug1)
 
         plt.figure(figsize=(10, 6))
@@ -119,7 +133,7 @@ class Visualizing:
 
         chart_style: Literal["line chart", "scatter chart"]
         if len(df) == 1:
-            log_warn = f"1 data cannot draw a line chart. As a result, it will be replaced by using a scatter plot."
+            log_warn = f"Only 1 data cannot draw a line chart. Instead, it will be replaced by using a scatter plot."
             self.log.warn(log_warn)
 
             chart_style = "scatter chart"
@@ -127,12 +141,16 @@ class Visualizing:
             plt.scatter(lc_time, l2bc_df[cols[1]], label=cols[1], color="green", marker="o")
             plt.scatter(lc_time, min_lbc_df[cols[2]], label=cols[2], color="red", marker="o")
             plt.scatter(lc_time, max_lbc_df[cols[3]], label=cols[3], color="orange", marker="o")
+            plt.scatter(lc_time, y=avg["AVG battery capacity"].iloc[0], label="Average battery capacity",
+                        color="magenta", marker="*")
         else:
             chart_style = "line chart"
             plt.plot(lc_time, ebc_df[cols[0]], label=cols[0], color="blue", linestyle="--")
             plt.plot(lc_time, l2bc_df[cols[1]], label=cols[1], color="green")
             plt.plot(lc_time, min_lbc_df[cols[2]], label=cols[2], color="red")
             plt.plot(lc_time, max_lbc_df[cols[3]], label=cols[3], color="orange")
+            plt.axhline(y=avg["AVG battery capacity"].iloc[0], color="magenta", linestyle="--",
+                        label="Average battery capacity")
 
         plt.grid(True)
         plt.gca().yaxis.set_major_locator(MultipleLocator(50))
@@ -167,4 +185,10 @@ class Visualizing:
 
 
 if __name__ == "__main__":
-    pass
+    v = Visualizing(os.path.dirname(os.getcwd()))
+    b = []
+    for root, dirs, files in os.walk("../files/recorded_data"):
+        for file in files:
+            if file.endswith(".csv"):
+                b.append(file)
+    count = [v.pline_chart(path=csv_p) for csv_p in b]

@@ -4,8 +4,8 @@ import shutil
 import time
 import zipfile
 
-from Modules.FileManager import FileManager
-from Modules.LogManager import Log
+from Modules.FileProcess import FolderOperator
+from Modules.LogRecord import Log
 
 
 class Compressing:
@@ -15,7 +15,7 @@ class Compressing:
         if not os.path.exists(self.log_path):
             os.makedirs(self.log_path)
         self.log = Log(os.path.join(self.log_path, "CompressingLog.txt"))
-        self.fm = FileManager(self.current_path)
+        self.fm = FolderOperator(self.current_path)
         self.basic_temp_path = os.path.join(self.current_path, "temp")
 
     def __create_temp_dir(self, temp_path: str = None) -> None:

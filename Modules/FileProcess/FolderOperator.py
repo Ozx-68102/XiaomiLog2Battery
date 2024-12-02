@@ -1,10 +1,10 @@
 import os
 import shutil
 
-from Modules.LogManager import Log
+from Modules.LogRecord import Log
 
 
-class FileManager:
+class FolderOperator:
     def __init__(self, current_path: str) -> None:
         self.path = None
         self.current_path = current_path
