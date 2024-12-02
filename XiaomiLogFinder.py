@@ -1,12 +1,9 @@
 import os
 from typing import Literal
 
-from Modules.Compress import Compressing
-from Modules.FileManager import FileManager
-from Modules.LogManager import Log
-from Modules.Record import Recording
-from Modules.Search import Searching
-from Modules.Visualization import Visualizing
+from Modules.FileProcess import Compressing, FolderOperator
+from Modules.DataAnalysis import Recording, Searching, Visualizing
+from Modules.LogRecord import Log
 
 
 def check_error(
@@ -74,7 +71,7 @@ def check_error(
 
 
 def main(cr):
-    fm = FileManager(cr)
+    fm = FolderOperator(cr)
     zip_filelist = fm.file_recognition(os.path.join(cr, "zips"))
     check_error(zip_filelist, "compressed file")
 
