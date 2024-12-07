@@ -11,7 +11,7 @@ class Searching:
         self.log_path = os.path.join(self.current_path, "Log")
         if not os.path.exists(self.log_path):
             os.makedirs(self.log_path)
-        self.log = Log(os.path.join(self.log_path, "SearchingLog.txt"))
+        self.log = Log(os.path.join(self.log_path, "Searching.txt"))
 
     def search_info(self, filepath: str | list[str]) -> None | list[dict[str, str | float]]:
         def battery_capacity_info(cname: str, s: str) -> float:
@@ -126,11 +126,6 @@ class Searching:
             xmlog_info[fgp[0]] = phone_fingerprint_recognition(content)[fgp[0]]
             xmlog_info[fgp[1]] = phone_fingerprint_recognition(content)[fgp[1]]
             xmlog_info[fgp[2]] = phone_fingerprint_recognition(content)[fgp[2]]
-
-            # temporary disabled because it is not belonging to capacity class.
-            # match_battery_time = re.search(pattern=r"Battery time remaining: \s*([\w\s]+ms)", string=content)
-            # if match_battery_time:
-            #     xmlog_info["Battery time remaining"] = match_battery_time.group(1)
 
             log_debug2 = f"Battery info has caught: {xmlog_info}"
             self.log.debug(log_debug2)

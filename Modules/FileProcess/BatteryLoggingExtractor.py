@@ -1,30 +1,39 @@
-import datetime
 import os
 import shutil
 import time
 import zipfile
+from concurrent.futures import ProcessPoolExecutor
+from datetime import datetime
+from multiprocessing import Manager
+from typing import Literal
 
 from Modules.FileProcess.FolderOperator import FolderOperator
-from Modules.LogRecord import Log
+from Modules.LogRecord import Log, LogForFastComp
 
 
-class Compressing:
-    def __init__(self, current_path: str) -> None:
+class BatteryLoggingExtractor:
+    def __init__(self, current_path: str):
         self.current_path = current_path
-        self.log_path = os.path.join(self.current_path, "Log")
-        if not os.path.exists(self.log_path):
-            os.makedirs(self.log_path)
-        self.log = Log(os.path.join(self.log_path, "CompressingLog.txt"))
-        self.fm = FolderOperator(self.current_path)
-        self.basic_temp_path = os.path.join(self.current_path, "temp")
+        self.log_path = os.path.join(os.path.join(self.current_path, "Log"))
+        os.makedirs(self.log_path, exist_ok=True)
+        self.log_filename = os.path.join(self.log_path, "BatteryLoggingExtractor.txt")
+        self.log = Log(self.log_filename)
+        self.Fop = FolderOperator(self.current_path)
+        self.tep = os.path.join(self.current_path, "temp")
 
-    def __create_temp_dir(self, temp_path: str = None) -> None:
-        temp_path = os.path.join(self.basic_temp_path, temp_path) if temp_path is not None else self.basic_temp_path
-        self.fm.create_dir(temp_path, ignore_tips=True)
+    def __manage_temp_dir(self, option: Literal["del", "crt", "reset"], tp: str = None) -> None:
+        temp_path = self.tep if (tp is None or tp == self.tep) else os.path.join(self.tep, tp)
 
-    def __del_temp_dir(self, temp_path: str = None) -> None:
-        temp_path = os.path.join(self.basic_temp_path, temp_path) if temp_path is not None else self.basic_temp_path
-        self.fm.delete_dir(temp_path)
+        if option == "del":
+            self.Fop.delete_dir(temp_path)
+        elif option == "crt":
+            self.Fop.create_dir(temp_path, ignore_tips=True)
+        elif option == "reset":
+            self.Fop.delete_dir(temp_path)
+            self.Fop.create_dir(temp_path, ignore_tips=True)
+        else:
+            errmsg = f"'option' variable was expected to receive 'del', 'crt' or 'reset', not '{option}'."
+            raise ValueError(errmsg)
 
     def __movefile(self, sp: str, dp: str, count: int) -> bool:
         try:
@@ -39,86 +48,96 @@ class Compressing:
 
         return False
 
+    def _multi_compress_func(self, filepath: str, count: Manager) -> list[str] | None:
+        logger = LogForFastComp(self.log_filename)
+
+        step = 1
+        if not filepath.startswith("bugreport") and not filepath.endswith(".zip"):
+            log_warn1_mcf = f"No compress file found in '{filepath}'.'"
+            logger.warn(log_warn1_mcf)
+            return None
+
+        name = os.path.basename(filepath).split(".", 1)[0]
+        temp = os.path.join(self.tep, f"temp_{name}")
+
+        self.__manage_temp_dir(option="del", tp=temp)
+
+        current_file = filepath
+
+        while current_file:
+            log_debug1_mcf = f"Starting decompression process {step} for {current_file}."
+            logger.debug(log_debug1_mcf)
+            self.__manage_temp_dir(option="crt", tp=temp)
+
+            try:
+                with zipfile.ZipFile(current_file, "r") as zip_ref:
+                    zip_ref.extractall(temp)
+                    file_list = zip_ref.namelist()
+
+            except zipfile.BadZipFile as e:
+                log_error1_mcf = (f"Decompression process failed for '{current_file}' on process {step}. "
+                                  f"Details: {str(e)}")
+                logger.error(log_error1_mcf)
+                return None
+
+            nested_zip = None
+            for file in file_list:
+                if file.startswith("bugreport") and file.endswith(".zip"):
+                    nested_zip = os.path.join(temp, file)
+                    break
+
+            if nested_zip:
+                log_debug2_mcf = f"Decompression process {step}: Nested zip file {nested_zip} found."
+                logger.debug(log_debug2_mcf)
+                current_file = nested_zip
+                step += 1
+            else:
+                count.value += 1
+                log_info_mcf = f"Decompression finished. Count:{count.value}."
+                logger.info(log_info_mcf)
+
+                log_debug3_mcf = (f"Decompression process {step}: No nested zip file found."
+                                  f"Process completed for {current_file}.")
+                logger.debug(log_debug3_mcf)
+
+                current_file = None
+
+        logger.stop()
+        return [os.path.join(temp, file) for file in file_list]
+
+
     def compress_xiaomi_log(self, filepath: str | list[str]) -> list[str] | None:
         if not filepath:
-            log_warn1 = "No log file was found."
+            log_warn1 = "No log file found."
             self.log.warn(log_warn1)
             return None
 
-        zipfile_count = 0
+        manager = Manager()
+        zipfile_count = manager.Value("i", 0)
 
-        if os.path.exists(self.basic_temp_path):
-            self.__del_temp_dir()
+        self.__manage_temp_dir(option="reset", tp=self.tep)
 
-        self.__create_temp_dir()
-
-        if isinstance(filepath, str):
-            filepath = [filepath]
+        filepath = list(filepath) if isinstance(filepath, list) else filepath
 
         processed_files = []
 
-        for fp in filepath:
-            step = 1
-            if not fp.startswith("bugreport") and not fp.endswith(".zip"):
-                log_warn1 = f"No log file from Xiaomi was found. Path:{fp}."
-                self.log.warn(log_warn1)
-                continue
+        with ProcessPoolExecutor(os.cpu_count()) as executor:
+            futures = [executor.submit(self._multi_compress_func, file, zipfile_count) for file in filepath]
 
-            name = os.path.basename(fp).split(".", 1)[0]
+            for future in futures:
+                result = future.result()
+                processed_files.extend(result)
 
-            # Create a directory in temp dir
-            temp = os.path.join(self.basic_temp_path, f"temp-{name}")
-            if os.path.exists(temp):
-                self.__del_temp_dir()
+        if zipfile_count.value == 0:
+            log_info = "Failed to decompress any Xiaomi log files."
+            self.log.info(log_info)
+        elif zipfile_count.value == 1:
+            log_info = "Successfully decompressed 1 Xiaomi log file."
+            self.log.info(log_info)
+        else:
+            log_info = f"Successfully decompressed {zipfile_count.value} Xiaomi log files."
+            self.log.info(log_info)
 
-            current_file = fp
-
-            while current_file:
-                # continue to decompress until there is no zip file
-                log_debug1 = f"Starting decompression process {step} for {current_file}..."
-                self.log.debug(log_debug1)
-                self.__create_temp_dir(temp)
-
-                try:
-                    with zipfile.ZipFile(current_file, "r") as zip_ref:
-                        zip_ref.extractall(temp)
-                        file_list = zip_ref.namelist()
-                except zipfile.BadZipfile as e:
-                    log_error = (f"[{zipfile_count}]Decompression process {step}:"
-                                 f" Bad compressed file error: {e.strerror}")
-                    self.log.error(log_error)
-                    self.__del_temp_dir(temp)
-                    continue
-
-                nested_zip = None
-                for file in file_list:
-                    if file.startswith("bugreport") and file.endswith(".zip"):
-                        nested_zip = os.path.join(temp, file)
-                        break
-
-                if nested_zip:
-                    log_debug2 = f"Decompression process {step}: Nested zip file {nested_zip} found."
-                    self.log.debug(log_debug2)
-                    current_file = nested_zip
-                    step += 1
-                else:
-                    zipfile_count = zipfile_count + 1 if zipfile_count < len(filepath) else zipfile_count
-                    log_info = f"File {zipfile_count} decompression finished."
-                    self.log.info(log_info)
-
-                    log_debug2 = (f"Decompression process {step}: No nested zip files found."
-                                  f" Process complete for {current_file}.")
-                    self.log.debug(log_debug2)
-
-                    # Decompression completed
-                    current_file = None
-
-            # At the end of the recursion, add final files into the list
-            # Ensure this only happens after the second decompression is finished
-            processed_files.extend([os.path.join(temp, file) for file in file_list])
-
-        log_info2 = f"Successfully compressed {len(filepath)} Xiaomi Log {"file" if len(filepath) == 1 else "files"}."
-        self.log.info(log_info2)
         return processed_files
 
     def find_xiaomi_log(self, filelist: list[str], batch: bool = True) -> list[str] | None:
@@ -129,10 +148,10 @@ class Compressing:
         :return: Success => list[str], Failure => None
         """
         files_path = os.path.join(self.current_path, "files")
-        self.fm.create_dir(files_path, ignore_tips=True)
+        self.Fop.create_dir(files_path, ignore_tips=True)
 
         to_overwrite_files = []
-        processed_files = []
+        founded_files = []
         ans = None
 
         # Try to process each file
@@ -151,21 +170,21 @@ class Compressing:
                         shutil.move(src=src_path, dst=dst_path)
                         log_info1 = f"Successfully found Xiaomi Log. Name: {os.path.basename(file)}"
                         self.log.info(log_info1)
-                        processed_files.append(dst_path)
+                        founded_files.append(dst_path)
                     except FileNotFoundError as e:
                         log_error1 = f"File not found: {e.strerror}."
                         self.log.error(log_error1)
-                        self.__del_temp_dir()
+                        self.__manage_temp_dir(option="del")
                         return None
                     except (shutil.Error, OSError) as e:
                         log_error1 = f"An error occurred while finding Xiaomi Log: {e.strerror}."
                         self.log.error(log_error1)
-                        self.__del_temp_dir()
+                        self.__manage_temp_dir(option="del")
                         return None
                     except Exception as e:
                         log_error1 = f"An error occurred while finding Xiaomi Log: {str(e)}."
                         self.log.error(log_error1)
-                        self.__del_temp_dir()
+                        self.__manage_temp_dir(option="del")
                         return None
 
         # if there are files with same name, ask user whether process it batch
@@ -186,14 +205,14 @@ class Compressing:
                         filecount = 1
                         for dst_path, src_path in to_overwrite_files:
                             if self.__movefile(sp=src_path, dp=dst_path, count=filecount):
-                                processed_files.append(dst_path)
+                                founded_files.append(dst_path)
 
                             filecount = filecount + 1 if filecount < num else num
 
                     elif ans == "n":
                         log_info3 = f"{num} old files has been retained."
                         self.log.info(log_info3)
-                        processed_files.extend(dst_path for dst_path, src_path in to_overwrite_files)
+                        founded_files.extend(dst_path for dst_path, src_path in to_overwrite_files)
                     else:
                         log_warn1 = "Invalid input. Please try again."
                         self.log.warn(log_warn1)
@@ -207,11 +226,11 @@ class Compressing:
 
                 for dst_path, src_path in to_overwrite_files:
                     dst_mtime = time.localtime(os.path.getmtime(dst_path))
-                    dst_mtime = datetime.datetime.fromtimestamp(time.mktime(dst_mtime))
+                    dst_mtime = datetime.fromtimestamp(time.mktime(dst_mtime))
                     dst_mtime = dst_mtime.strftime("%Y-%m-%d %H:%M:%S")
 
                     src_mtime = time.localtime(os.path.getmtime(src_path))
-                    src_mtime = datetime.datetime.fromtimestamp(time.mktime(src_mtime))
+                    src_mtime = datetime.fromtimestamp(time.mktime(src_mtime))
                     src_mtime = src_mtime.strftime("%Y-%m-%d %H:%M:%S")
 
                     log_info4 = f"[{filecount}]Old file modified date: {dst_mtime}"
@@ -231,13 +250,13 @@ class Compressing:
 
                         if ans == "y":
                             if self.__movefile(sp=src_path, dp=dst_path, count=filecount):
-                                processed_files.append(dst_path)
+                                founded_files.append(dst_path)
 
                             filecount = filecount + 1 if filecount < num else num
                             break
 
-        self.__del_temp_dir()
-        return processed_files
+        self.__manage_temp_dir(option="del")
+        return founded_files
 
 
 if __name__ == "__main__":

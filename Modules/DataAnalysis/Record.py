@@ -13,7 +13,7 @@ class Recording:
         self.file_path = os.path.join(self.current_path, "files")
         if not os.path.exists(self.log_path):
             os.makedirs(self.log_path)
-        self.log = Log(path=os.path.join(self.log_path, "RecordingLog.txt"))
+        self.log = Log(path=os.path.join(self.log_path, "Recording.txt"))
 
     def __df2csv(self, path: str):
         # "Battery time remaining" disabled temporary

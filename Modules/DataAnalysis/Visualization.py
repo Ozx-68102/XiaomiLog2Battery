@@ -1,9 +1,9 @@
 import os
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.ticker import MultipleLocator
-from typing import Literal
 
 from Modules.LogRecord import Log
 
@@ -12,7 +12,7 @@ class Visualizing:
     def __init__(self, current_path: str):
         self.current_path = current_path
         self.log_path = self.__crt_dir(os.path.join(self.current_path, "Log"))
-        self.log = Log(os.path.join(self.log_path, "VisualizingLog.txt"))
+        self.log = Log(os.path.join(self.log_path, "Visualizing.txt"))
         self.filepath = self.__crt_dir(os.path.join(self.current_path, "files"))
         self.csv_path = self.__crt_dir(os.path.join(self.filepath, "recorded_data"))
         self.png_path = self.__crt_dir(os.path.join(self.csv_path, "images"))

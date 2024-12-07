@@ -24,7 +24,7 @@ class FolderOperator:
         self.path = path
         self.__empty_path()
 
-        self.log.debug(f"The argument of parameter 'ignore_tips' is {ignore_tips}.")
+        self.log.debug(f"ignore_tips={ignore_tips}.")
 
         if os.path.exists(self.path):
             if not ignore_tips:
@@ -148,8 +148,9 @@ class FolderOperator:
             if not called_by_cmd:
                 log_error1 = "Directory does not exist."
                 self.log.error(log_error1)
+                return False
 
-            return False
+            return True
 
         try:
             shutil.rmtree(self.path)

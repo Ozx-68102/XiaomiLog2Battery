@@ -16,6 +16,8 @@ Those with outstanding abilities can ignore the above suggestions and make their
 
 ****
 ####  依赖 Python 库（包含Python内置库且不分先后顺序） <br /> Required Python Packages including built-in packages in no particular order
+- concurrent.futures
+- multiprocessing
 - matplotlib
 - datetime
 - logging
