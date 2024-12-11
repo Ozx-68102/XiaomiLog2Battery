@@ -42,8 +42,7 @@ class Visualizing:
             p2df = pd.read_csv(path, sep=",", low_memory=False)
             row = p2df.shape[0]
             col = p2df.shape[1]
-            log_info = (f"The data in {row} {"row" if row == 1 else "rows"} and {col} {"col" if col == 1 else "cols"}"
-                        f" has been read.")
+            log_info = f"The data in {row} row(s) and {col} col(s) has/have been read."
             self.log.info(log_info)
         except FileNotFoundError as e:
             log_error = f"File not found. Detail: {str(e)}"
@@ -103,33 +102,42 @@ class Visualizing:
             "nickname"
         ]
 
-        ebc_df = pd.DataFrame(df.loc[:, cols[0]])
-        l2bc_df = pd.DataFrame(df.loc[:, cols[1]])
-        min_lbc_df = pd.DataFrame(df.loc[:, cols[2]])
-        max_lbc_df = pd.DataFrame(df.loc[:, cols[3]])
+        try:
+            ebc_df = pd.DataFrame(df.loc[:, cols[0]])
+            l2bc_df = pd.DataFrame(df.loc[:, cols[1]])
+            min_lbc_df = pd.DataFrame(df.loc[:, cols[2]])
+            max_lbc_df = pd.DataFrame(df.loc[:, cols[3]])
 
-        avg_last_learned = l2bc_df[cols[1]].mean().astype(int)
-        avg_min_learned = min_lbc_df[cols[2]].mean().astype(int)
-        avg_max_learned = max_lbc_df[cols[3]].mean().astype(int)
+            avg_last_learned = l2bc_df[cols[1]].mean().astype(int)
+            avg_min_learned = min_lbc_df[cols[2]].mean().astype(int)
+            avg_max_learned = max_lbc_df[cols[3]].mean().astype(int)
 
-        avg_df = {
-            "Last learned battery capacity": [avg_last_learned],
-            "Min learned battery capacity": [avg_min_learned],
-            "Max learned battery capacity": [avg_max_learned]
-        }
 
-        avg = pd.DataFrame(avg_df)
-        avg["AVG battery capacity"] = avg.mean(axis=1).astype(int)
+            avg_df = {
+                "Last learned battery capacity": [avg_last_learned],
+                "Min learned battery capacity": [avg_min_learned],
+                "Max learned battery capacity": [avg_max_learned]
+            }
 
-        log_debug1 = (f"DataFrames were set. Detail: Estimated_line={ebc_df.shape[0]}, "
-                      f"Last Learned AVG={avg_last_learned} mAh, Min Learned={avg_min_learned} mAh,"
-                      f" Max Learned={avg_max_learned} mAh, AVG={avg['AVG battery capacity'].iloc[0]} mAh.")
-        self.log.debug(log_debug1)
+            avg = pd.DataFrame(avg_df)
+            avg["AVG battery capacity"] = avg.mean(axis=1).astype(int)
 
-        plt.figure(figsize=(10, 6))
+            log_debug1 = (f"DataFrames were set. Detail: Estimated_line={ebc_df.shape[0]}, "
+                          f"Last Learned AVG={avg_last_learned} mAh, Min Learned={avg_min_learned} mAh,"
+                          f" Max Learned={avg_max_learned} mAh, AVG={avg['AVG battery capacity'].iloc[0]} mAh.")
+            self.log.debug(log_debug1)
+
+            model = df.loc[:, cols[4]].max()
+
+            log_info1 = f"INFORMATION => Model: {model}, Average battery capacity: {avg['AVG battery capacity'].iloc[0]} mAh."
+            self.log.info(log_info1)
+        except AttributeError as e:
+            log_error = f"Attribute Error while visualizing a line chart: {str(e)}."
+            self.log.error(log_error)
+            return False
+
         lc_time = df["Log Captured Time"]
-
-        model = df.loc[:, cols[4]].max()
+        plt.figure(figsize=(10, 6))
 
         chart_style: Literal["line chart", "scatter chart"]
         if len(df) == 1:
@@ -176,10 +184,9 @@ class Visualizing:
         log_debug5 = f"Image have been saved at {png_path}."
         self.log.debug(log_debug5)
 
-        log_info = f"Successfully showed the {chart_style}. Path:{png_path}."
-        self.log.info(log_info)
-
         plt.show()
+        log_info2 = f"Successfully showed the {chart_style}. Path:{png_path}."
+        self.log.info(log_info2)
 
         return True
 

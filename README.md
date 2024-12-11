@@ -5,26 +5,27 @@ A program which is analyzing battery capacity on logs from Xiaomi smartphones.
 #### 信息 Information
 Python 版本：**3.13**<br />
 主程序：`XiaomiLogFinder.py`, 目前仅支持**英语**。<br />
-建议使用PyCharm 2024.1.7及以上版本运行。<br />
-如果需要调试运行，建议将PyCharm版本更新到2024.03再运行<br />
-大佬可忽视上述建议自行决定 **:P**
+运行方式：<br />
+1. 双击`Start.bat`。<br />
+2. 使用PyCharm 2024.1.7及以上版本，新建项目，然后把下载的文件剪切进去，先运行`Check_packages.py`安装所需包，再运行主程序。<br />
 
-Python Version **3.13**<br />
-Main Program name: `XiaomiLogFinder.py`, only **English** is supported currently.<br />
-If debugging is necessary, updating the version of PyCharm to **2024.03** or the latest versions is recommended.<br />
-Those with outstanding abilities can ignore the above suggestions and make their own decisions. **:P**
+如果需要调试运行的话，建议使用PyCharm 2024.03或以上版本。<br />
+
+**方法1目前存在的一个缺点是：<br />
+如果存在多机型日志压缩文件，则每生成一张图都需要关闭图片，程序才能继续。**
+
+Python version **3.13**<br />
+Main program name: `XiaomiLogFinder.py`, only **English** is supported at the moment.<br />
+Usage:<br />
+1. Double-click `Start.bat` to run this program.<br />
+2. Using PyCharm 2024.1.7 and above to create a new project, then cut the downloaded file into it, and run `Check_packages.py` to install the required packages. Next, run the main program.<br />
+
+For debugging, use PyCharm 2024.03 or later is recommended.<br />
+
+**Note that there is a limitation with method 1:<br />
+If there are multiple device log files in the `zips` folder, you will need to manually close each generated image for the program to continue running.**
 
 ****
-####  依赖 Python 库（包含Python内置库且不分先后顺序） <br /> Required Python Packages including built-in packages in no particular order
-- concurrent.futures
-- multiprocessing
+####  依赖 Python 库（包含Python内置库且不分先后顺序） <br /> Required Python Packages in no particular order
 - matplotlib
-- datetime
-- logging
 - pandas
-- typing
-- zipfile
-- shutil
-- time
-- os
-- re

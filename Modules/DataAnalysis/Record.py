@@ -228,7 +228,7 @@ class Recording:
             return None
 
         if csv_data.shape[0] == 0:
-            log_info1 = "csv file is empty. So now is preparing to import data."
+            log_info1 = "The specified csv file is empty. So now is preparing to import data."
             self.log.info(log_info1)
             if self.__import_data(df, cp):
                 return cp

@@ -11,7 +11,7 @@ class FolderOperator:
         self.log_path = os.path.join(self.current_path, "Log")
         if not os.path.exists(self.log_path):
             os.makedirs(self.log_path)
-        self.log = Log(path=os.path.join(self.log_path, "FileManagerLog.txt"))
+        self.log = Log(path=os.path.join(self.log_path, "FolderOperator.txt"))
 
     def __empty_path(self) -> ValueError | None:
         if self.path is None or str.isspace(self.path):

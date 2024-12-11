@@ -67,7 +67,7 @@ class Log(BaseLog):
         self.logger.addHandler(stream_handler)
 
 
-class LogForFastComp(BaseLog):
+class LogForMultiProc(BaseLog):
     """ For multiprocess environments """
 
     def __init__(self, path: str) -> None:
