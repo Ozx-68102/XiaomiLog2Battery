@@ -3,7 +3,7 @@ import sys
 
 
 def check_and_install_packages():
-    required_packages = ['matplotlib', 'pandas', 'numpy']
+    required_packages = ['pyecharts', 'pandas']
     for package in required_packages:
         try:
             __import__(package)
@@ -11,7 +11,7 @@ def check_and_install_packages():
         except ImportError:
             print(f"{package} is not installed. So installation will begin soon...")
             try:
-                subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+                subprocess.check_call([sys.executable, "-m", "pip3", "install", package])
             except subprocess.CalledProcessError:
                 print(f"Failed to install {package}. Please check your internet connection or Python environment.")
                 sys.exit(1)

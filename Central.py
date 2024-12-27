@@ -1,5 +1,4 @@
 import os
-from logging import Logger
 from typing import Literal
 
 from Modules.FileProcess import BatteryLoggingExtractor, FolderOperator
@@ -79,7 +78,7 @@ class ErrorChecker:
 def main(cr, logger: Log):
     checker = ErrorChecker(logger)
 
-    folder_operator = FolderOperator(cr)
+    folder_operator = FolderOperator()
     compressed_files = folder_operator.file_recognition(os.path.join(cr, "zips"))
     checker.check(compressed_files, "compressed file")
 
@@ -89,7 +88,7 @@ def main(cr, logger: Log):
     checker.check(xiaomi_log, "Xiaomi log file")
 
     logger.info("Preparing to search information in log file(s). Please wait...")
-    searcher = Searching(cr)
+    searcher = Searching()
     battery_info = searcher.search_info(xiaomi_log)
     checker.check(battery_info, "battery information")
 
@@ -109,12 +108,10 @@ def main(cr, logger: Log):
     checker.check(line_chart_creation_results, "line chart")
 
 
-if __name__ == "__main__":
+if "__main__" == __name__:
+    log_filename = "Central.txt"
+    log = Log(filename=log_filename)
     current = os.getcwd()
-    log_path = os.path.join(current, "Log")
-    os.makedirs(log_path, exist_ok=True)
-    log_filename = os.path.join(log_path, "Central.txt")
-    log = Log(log_filename)
     log.info("Starting running the program now.")
     log.debug("Log module has been initialled successfully.")
-    main(current, log)
+    main(cr=current, logger=log)

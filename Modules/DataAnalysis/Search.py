@@ -7,12 +7,9 @@ from Modules.LogRecord import Log, LogForMultiProc
 
 
 class Searching:
-    def __init__(self, current_path: str) -> None:
-        self.current_path = current_path
-        self.log_path = os.path.join(self.current_path, "Log")
-        self.log_filename = os.path.join(self.log_path, "Searching.txt")
-        os.makedirs(self.log_path, exist_ok=True)
-        self.log = Log(self.log_filename)
+    def __init__(self) -> None:
+        self.logger_filename = "Searching.txt"
+        self.log = Log(filename=self.logger_filename)
 
     def _multi_search_info(self, filepath: str, count: Manager) -> dict[str, str] | None:
         def search_capacity(name: str, cont: str, logger: LogForMultiProc) -> float | None:
@@ -76,60 +73,66 @@ class Searching:
             time_data = disorder_data.rsplit("-", 3)
             return f"{time_data[0]} {time_data[1]}:{time_data[2]}:{time_data[3]}"
 
-        multi_log = LogForMultiProc(self.log_filename)
-
-        filename = os.path.basename(filepath)
-        if not filename.startswith("bugreport") and not filename.endswith(".txt"):
-            log_warn1 = "No Xiaomi log file found."
-            multi_log.warn(log_warn1)
-            return None
+        multi_log = LogForMultiProc(self.logger_filename)
 
         try:
-            with open(file=filepath, mode="r", encoding="utf-8", errors="ignore") as f:
-                content = f.read()
+            filename = os.path.basename(filepath)
+            if not filename.startswith("bugreport") and not filename.endswith(".txt"):
+                log_warn1 = "No Xiaomi log file found."
+                multi_log.warn(log_warn1)
+                multi_log.stop()
+                return None
 
-            log_debug1 = f"Log was read successfully. Path: {filepath}."
-            multi_log.debug(log_debug1)
+            try:
+                with open(file=filepath, mode="r", encoding="utf-8", errors="ignore") as f:
+                    content = f.read()
 
-        except OSError as e:
-            log_error = f"An error occurred while opening a file. Details: {e.strerror}, Path:{filepath}."
-            multi_log.error(log_error)
-            return None
-        except ValueError as e:
-            log_error = f"An ValueError occurred while opening a file. Details: {str(e)}."
-            multi_log.error(log_error)
-            return None
-        except Exception as e:
-            log_error = f"An error occurred while opening a file. Details: {str(e)}."
-            multi_log.error(log_error)
-            return None
+                log_debug1 = f"Log was read successfully. Path: {filepath}."
+                multi_log.debug(log_debug1)
 
-        keynames = [
-            "Estimated battery capacity", "Last learned battery capacity",
-            "Min learned battery capacity", "Max learned battery capacity"
-        ]
+            except OSError as e:
+                log_error = f"An error occurred while opening a file. Details: {e.strerror}, Path:{filepath}."
+                multi_log.error(log_error)
+                multi_log.stop()
+                return None
+            except ValueError as e:
+                log_error = f"An ValueError occurred while opening a file. Details: {str(e)}."
+                multi_log.error(log_error)
+                multi_log.stop()
+                return None
+            except Exception as e:
+                log_error = f"An error occurred while opening a file. Details: {str(e)}."
+                multi_log.error(log_error)
+                multi_log.stop()
+                return None
 
-        fgp = ["phone_brand", "nickname", "system_version"]
+            keynames = [
+                "Estimated battery capacity", "Last learned battery capacity",
+                "Min learned battery capacity", "Max learned battery capacity"
+            ]
 
-        log_captured_time = time_processing(filename.split("-", 3)[-1].rsplit(".", 1)[0])
+            fgp = ["phone_brand", "nickname", "system_version"]
 
-        log_information = {
-            "Log Captured Time": str(log_captured_time),
-            **{key: search_capacity(key, content, multi_log) for key in keynames}
-        }
+            log_captured_time = time_processing(filename.split("-", 3)[-1].rsplit(".", 1)[0])
 
-        fgp_info = fingerprint_recognition(content, multi_log)
-        log_information.update({key: fgp_info[key] for key in fgp if fgp_info is not None})
+            log_information = {
+                "Log Captured Time": str(log_captured_time),
+                **{key: search_capacity(key, content, multi_log) for key in keynames}
+            }
 
-        log_debug2 = f"Xiaomi Log information has caught: {log_information}."
-        multi_log.debug(log_debug2)
+            fgp_info = fingerprint_recognition(content, multi_log)
+            log_information.update({key: fgp_info[key] for key in fgp if fgp_info is not None})
 
-        count.value += 1
+            log_debug2 = f"Xiaomi Log information has caught: {log_information}."
+            multi_log.debug(log_debug2)
 
-        log_info1 = f"Log information has been matched. Count: {count.value}."
-        multi_log.info(log_info1)
+            count.value += 1
 
-        multi_log.stop()
+            log_info1 = f"Log information has been matched. Count: {count.value}."
+            multi_log.info(log_info1)
+        finally:
+            multi_log.stop()
+
         return log_information
 
     def search_info(self, filepath: str | list[str]) -> list[dict[str, str]] | None:
@@ -148,7 +151,9 @@ class Searching:
 
             for future in futures:
                 result = future.result()
-                log_files.append(result)
+
+                if result:
+                    log_files.append(result)
 
         if log_count.value == 0 and len(log_files) == 0:
             log_error = "Failed to find any information."

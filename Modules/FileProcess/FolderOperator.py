@@ -5,28 +5,24 @@ from Modules.LogRecord import Log
 
 
 class FolderOperator:
-    def __init__(self, current_path: str) -> None:
-        self.path = None
-        self.current_path = current_path
-        self.log_path = os.path.join(self.current_path, "Log")
-        if not os.path.exists(self.log_path):
-            os.makedirs(self.log_path)
-        self.log = Log(path=os.path.join(self.log_path, "FolderOperator.txt"))
+    def __init__(self) -> None:
+        self.logger_filename = "FolderOperator.txt"
+        self.log = Log(filename=self.logger_filename)
 
-    def __empty_path(self) -> ValueError | None:
-        if self.path is None or str.isspace(self.path):
+    def __empty_path(self, path: str) -> ValueError | None:
+        if path is None or path.isspace():
             errmsg = "No specified file path."
             raise ValueError(errmsg)
         else:
+            self.log.debug(f"Specified path: {path}")
             return None
 
     def create_dir(self, path: str, ignore_tips: bool = False) -> str | None:
-        self.path = path
-        self.__empty_path()
+        self.__empty_path(path)
 
         self.log.debug(f"ignore_tips={ignore_tips}.")
 
-        if os.path.exists(self.path):
+        if os.path.exists(path):
             if not ignore_tips:
                 log_info1 = ("Directory has already existed. If you want to overwrite it,"
                              " all the files under it will be deleted.")
@@ -43,13 +39,13 @@ class FolderOperator:
 
                     if ans == "y":
                         try:
-                            shutil.rmtree(self.path)
-                            os.makedirs(self.path)
+                            shutil.rmtree(path)
+                            os.makedirs(path)
                             
                             log_info4 = "Directory overwrote successfully."
                             self.log.info(log_info4)
                             
-                            return self.path
+                            return path
                         except PermissionError as e:
                             log_error = f"Permission error while overwriting the directory: {e.strerror}."
                             self.log.error(log_error)
@@ -69,14 +65,14 @@ class FolderOperator:
                     elif ans == "n":
                         log_info3 = "Directory has been retained."
                         self.log.info(log_info3)
-                        return self.path
+                        return path
                     else:
                         log_warn = "Invalid input. Please try again."
                         self.log.warn(log_warn)
             else:
                 try:
-                    os.makedirs(self.path, exist_ok=True)
-                    return self.path
+                    os.makedirs(path, exist_ok=True)
+                    return path
                 except OSError as e:
                     log_error = f"An error occurred while creating the directory: {e.strerror}."
                     self.log.error(log_error)
@@ -86,17 +82,17 @@ class FolderOperator:
                     self.log.error(log_error)
                     return None
         else:
-            os.makedirs(self.path)
+            os.makedirs(path)
             log_debug = "Directory created successfully."
             self.log.debug(log_debug)
-            return self.path
+            return path
 
     def file_recognition(
             self,
             path: str,
             exclude_dir: list[str] | tuple[str] = (".git", ".idea", ".venv", "__pycache__", "Modules", "temp"),
             conditions: list[str] | tuple[str] = ("bugreport", ".zip"),
-    ) -> list | None:
+    ) -> list[str] | None:
         """
         Recognize the files in the specified path. If path does not exist, it will be created,
          and you need to retry the program.
@@ -141,10 +137,9 @@ class FolderOperator:
         log_debug1 = f"called_by_cmd={called_by_cmd}."
         self.log.debug(log_debug1)
 
-        self.path = path
-        self.__empty_path()
+        self.__empty_path(path)
 
-        if not os.path.exists(self.path):
+        if not os.path.exists(path):
             if not called_by_cmd:
                 log_error1 = "Directory does not exist."
                 self.log.error(log_error1)
@@ -153,7 +148,7 @@ class FolderOperator:
             return True
 
         try:
-            shutil.rmtree(self.path)
+            shutil.rmtree(path)
         except FileNotFoundError as e:
             log_warn = f"File not found while deleting a directory: {e.strerror}"
             self.log.warn(log_warn)

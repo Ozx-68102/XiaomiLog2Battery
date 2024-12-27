@@ -1,0 +1,25 @@
+{
+    "file_handler": {
+        "path": "Log/",
+        "maxBytes": 5242880,
+        "backupCount": 5,
+        "level": "DEBUG",
+        "formatter": {
+            "fmt": "[%(asctime)s] [%(levelname)s] %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S"
+        }
+    },
+    "stream_handler": {
+        "level": "INFO",
+        "formatter": {
+            "fmt": "[%(levelname)s] %(message)s"
+        }
+    },
+    "color_map": {
+        "DEBUG": "green",
+        "INFO": "green",
+        "WARNING": "yellow",
+        "ERROR": "red",
+        "CRITICAL": "red"
+  }
+}

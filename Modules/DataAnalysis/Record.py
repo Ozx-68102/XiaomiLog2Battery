@@ -9,14 +9,12 @@ from Modules.LogRecord import Log
 class Recording:
     def __init__(self, current_path: str) -> None:
         self.current_path = current_path
-        self.log_path = os.path.join(self.current_path, "Log")
         self.file_path = os.path.join(self.current_path, "files")
-        if not os.path.exists(self.log_path):
-            os.makedirs(self.log_path)
-        self.log = Log(path=os.path.join(self.log_path, "Recording.txt"))
+
+        self.logger_filename = "Record.txt"
+        self.log = Log(filename=self.logger_filename)
 
     def __df2csv(self, path: str):
-        # "Battery time remaining" disabled temporary
         columns = [
             "Estimated battery capacity", "Last learned battery capacity",
             "Min learned battery capacity", "Max learned battery capacity",

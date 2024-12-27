@@ -14,26 +14,29 @@ from Modules.LogRecord import Log, LogForMultiProc
 class BatteryLoggingExtractor:
     def __init__(self, current_path: str):
         self.current_path = current_path
-        self.log_path = os.path.join(self.current_path, "Log")
-        os.makedirs(self.log_path, exist_ok=True)
-        self.log_filename = os.path.join(self.log_path, "BatteryLoggingExtractor.txt")
-        self.log = Log(self.log_filename)
-        self.Fop = FolderOperator(self.current_path)
+
+        self.logger_filename = "BatteryLoggingExtractor.txt"
+        self.log = Log(filename=self.logger_filename)
+
+        self.Fop = FolderOperator()
         self.tep = os.path.join(self.current_path, "temp")
 
     def __manage_temp_dir(self, option: Literal["del", "crt", "reset"], tp: str = None) -> None:
         temp_path = self.tep if (tp is None or tp == self.tep) else os.path.join(self.tep, tp)
 
-        if option == "del":
-            self.Fop.delete_dir(temp_path)
-        elif option == "crt":
-            self.Fop.create_dir(temp_path, ignore_tips=True)
-        elif option == "reset":
-            self.Fop.delete_dir(temp_path)
-            self.Fop.create_dir(temp_path, ignore_tips=True)
-        else:
-            errmsg = f"'option' variable was expected to receive 'del', 'crt' or 'reset', not '{option}'."
-            raise ValueError(errmsg)
+        # New syntax for Python 3.10 and above
+        match option:
+            case "del":
+                self.Fop.delete_dir(temp_path)
+            case "crt":
+                self.Fop.create_dir(temp_path, ignore_tips=True)
+            case "reset":
+                self.Fop.delete_dir(temp_path)
+                self.Fop.create_dir(temp_path, ignore_tips=True)
+            case _:
+                errmsg = f"'option' variable was expected to receive 'del', 'crt' or 'reset', not '{option}'."
+                raise ValueError(errmsg)
+
 
     def __movefile(self, sp: str, dp: str, count: int) -> bool:
         try:
@@ -49,60 +52,63 @@ class BatteryLoggingExtractor:
         return False
 
     def _multi_compress_func(self, filepath: str, count: Manager) -> list[str] | None:
-        logger = LogForMultiProc(self.log_filename)
-
-        step = 1
-        if not filepath.startswith("bugreport") and not filepath.endswith(".zip"):
-            log_warn1_mcf = f"No compress file found in '{filepath}'.'"
-            logger.warn(log_warn1_mcf)
-            return None
-
-        name = os.path.basename(filepath).split(".", 1)[0]
-        temp = os.path.join(self.tep, f"temp_{name}")
-
-        self.__manage_temp_dir(option="del", tp=temp)
-
-        current_file = filepath
-
-        while current_file:
-            log_debug1_mcf = f"Starting decompression process {step} for {current_file}."
-            logger.debug(log_debug1_mcf)
-            self.__manage_temp_dir(option="crt", tp=temp)
-
-            try:
-                with zipfile.ZipFile(current_file, "r") as zip_ref:
-                    zip_ref.extractall(temp)
-                    file_list = zip_ref.namelist()
-
-            except zipfile.BadZipFile as e:
-                log_error1_mcf = (f"Decompression process failed for '{current_file}' on process {step}. "
-                                  f"Details: {str(e)}")
-                logger.error(log_error1_mcf)
+        logger = LogForMultiProc(self.logger_filename)
+        try:
+            step = 1
+            if not filepath.startswith("bugreport") and not filepath.endswith(".zip"):
+                log_warn1_mcf = f"No compress file found in '{filepath}'.'"
+                logger.warn(log_warn1_mcf)
+                logger.stop()
                 return None
 
-            nested_zip = None
-            for file in file_list:
-                if file.startswith("bugreport") and file.endswith(".zip"):
-                    nested_zip = os.path.join(temp, file)
-                    break
+            name = os.path.basename(filepath).split(".", 1)[0]
+            temp = os.path.join(self.tep, f"temp_{name}")
 
-            if nested_zip:
-                log_debug2_mcf = f"Decompression process {step}: Nested zip file {nested_zip} found."
-                logger.debug(log_debug2_mcf)
-                current_file = nested_zip
-                step += 1
-            else:
-                count.value += 1
-                log_info_mcf = f"Decompression finished. Count:{count.value}."
-                logger.info(log_info_mcf)
+            self.__manage_temp_dir(option="del", tp=temp)
 
-                log_debug3_mcf = (f"Decompression process {step}: No nested zip file found."
-                                  f"Process completed for {current_file}.")
-                logger.debug(log_debug3_mcf)
+            current_file = filepath
 
-                current_file = None
+            while current_file:
+                log_debug1_mcf = f"Starting decompression process {step} for {current_file}."
+                logger.debug(log_debug1_mcf)
+                self.__manage_temp_dir(option="crt", tp=temp)
 
-        logger.stop()
+                try:
+                    with zipfile.ZipFile(current_file, "r") as zip_ref:
+                        zip_ref.extractall(temp)
+                        file_list = zip_ref.namelist()
+
+                except zipfile.BadZipFile as e:
+                    log_error1_mcf = (f"Decompression process failed for '{current_file}' on process {step}, "
+                                      f"maybe this compressed file is corrupted. Details: {str(e)}")
+                    logger.error(log_error1_mcf)
+                    logger.stop()
+                    return None
+
+                nested_zip = None
+                for file in file_list:
+                    if file.startswith("bugreport") and file.endswith(".zip"):
+                        nested_zip = os.path.join(temp, file)
+                        break
+
+                if nested_zip:
+                    log_debug2_mcf = f"Decompression process {step}: Nested zip file {nested_zip} found."
+                    logger.debug(log_debug2_mcf)
+                    current_file = nested_zip
+                    step += 1
+                else:
+                    count.value += 1
+                    log_info_mcf = f"Decompression finished. Count:{count.value}."
+                    logger.info(log_info_mcf)
+
+                    log_debug3_mcf = (f"Decompression process {step}: No nested zip file found."
+                                      f"Process completed for {current_file}.")
+                    logger.debug(log_debug3_mcf)
+
+                    current_file = None
+        finally:
+            logger.stop()
+
         return [os.path.join(temp, file) for file in file_list]
 
 
@@ -120,6 +126,7 @@ class BatteryLoggingExtractor:
 
         processed_files = []
 
+        # "psutil" library cannot be use because it will cause some troublesome problems that may not have suitable solution
         if len(filepath) < os.cpu_count():
             workers = len(filepath)
         else:
@@ -130,17 +137,19 @@ class BatteryLoggingExtractor:
 
             for future in futures:
                 result = future.result()
-                processed_files.extend(result)
+                if result:
+                    processed_files.extend(result)
 
-        if zipfile_count.value == 0:
-            log_error = "Failed to decompress any Xiaomi log files."
-            self.log.error(log_error)
-        elif zipfile_count.value == 1:
-            log_info = "Successfully decompressed 1 Xiaomi log file."
-            self.log.info(log_info)
-        else:
-            log_info = f"Successfully decompressed {zipfile_count.value} Xiaomi log files."
-            self.log.info(log_info)
+        match zipfile_count.value:
+            case 0:
+                log_error = "Failed to decompress any Xiaomi log files."
+                self.log.error(log_error)
+            case 1:
+                log_info = "Successfully decompressed 1 Xiaomi log file."
+                self.log.info(log_info)
+            case _:
+                log_info = f"Successfully decompressed {zipfile_count.value} Xiaomi log files."
+                self.log.info(log_info)
 
         return processed_files
 
