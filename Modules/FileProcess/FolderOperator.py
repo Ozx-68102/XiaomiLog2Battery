@@ -112,9 +112,11 @@ class FolderOperator:
         for root, dirs, files in os.walk(path):
             dirs[:] = [d for d in dirs if d not in exclude_dir]
 
-            if len(conditions) > 2 or len(conditions) < 2:
+            length_con = len(conditions)
+            if length_con > 2 or length_con < 2:
+                grammar_suit = f"is {length_con} condition" if length_con == 1 else f"are {length_con} conditions"
                 log_error1 = (f"'file_recognition' expects to receive 2 conditions,"
-                              f" but there {"is" if len(conditions) == 1 else "are"} conditions.")
+                              f" but there {grammar_suit}.")
                 self.log.error(log_error1)
                 return None
 
@@ -128,7 +130,8 @@ class FolderOperator:
             self.log.warn(log_warn1)
             return None
         elif num > 0:
-            log_info = f"{num} {"file" if num == 1 else "files"} were found."
+            grammar_suit = "file was" if num == 1 else "files were"
+            log_info = f"{num} {grammar_suit} found."
             self.log.info(log_info)
 
         return files_list

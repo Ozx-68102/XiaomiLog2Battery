@@ -75,7 +75,7 @@ class ErrorChecker:
         exit(1)
 
 
-def main(cr, logger: Log):
+def main(cr: str, logger: Log):
     checker = ErrorChecker(logger)
 
     folder_operator = FolderOperator()

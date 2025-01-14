@@ -1,10 +1,14 @@
 #### 简介 Simply Introduction
-通过小米手机日志去分析这部手机的电池容量。<br />
+通过小米手机日志去分析手机的电池容量。<br />
 A program which is analyzing battery capacity on logs from Xiaomi smartphones.
+****
+#### 注意事项 Precautions
+通过本项目分析得出的电池容量可能与官方售后检测结果有差异，一切请以官方检测的数据为准。<br />
+Please note that the battery capacity analyzed through this project might differ from the results of official after-sales inspections. All data should be considered definitive based on the official tests.
 ****
 #### 信息 Information
 Python 版本：**3.13.0**<br />
-主程序：`XiaomiLogFinder.py`, 目前仅支持**英语**。<br />
+主程序：`Central.py`, 目前仅支持**英语**。<br />
 运行方式：<br />
 1. 将小米日志原文件（类似于`bugreport-2024-10-01-001217.zip`之类的名字）复制到`zips`文件夹下，然后双击`Start.bat`文件。<br />
 2. 使用PyCharm 2024.1.7及以上版本，新建项目，然后把下载的文件剪切进去，运行`Check_packages.py`安装所需包，将日志文件拷贝到`zips`文件夹下，再运行主程序。<br />
@@ -12,12 +16,16 @@ Python 版本：**3.13.0**<br />
 如果需要调试运行的话，建议使用PyCharm 2024.03或以上版本。<br />
 
 Python version **3.13.0**<br />
-Main program name: `XiaomiLogFinder.py`, only **English** is supported at the moment.<br />
+Main program name: `Central.py`, only **English** is supported at the moment.<br />
 Usage:<br />
 1. Copy the original Xiaomi log file (with a name similar to `bugreport-2024-10-01-001217.zip`) to the folder named `zips` , and double-click `Start.bat` file.<br />
 2. Using PyCharm 2024.1.7 and above to create a new project, then cut the downloaded file into it, and run `Check_packages.py` to install the required packages. Then, copy log files into the `zips` folder, and run the main program.<br />
 
 For debugging, use PyCharm 2024.03 or later is recommended.<br />
+****
+#### 已知问题 Known Issues
+在项目的日志记录系统中，文件日志记录存在有重复记录的问题，不影响正常使用，目前正在寻找解决办法。<br />
+In the project's logging system, there is a problem of duplicate records in file logging, which does not affect normal use. I am currently looking for a solution.
 ****
 ####  技术栈 Technology Stacks
 **主编程语言：Python**
@@ -45,7 +53,7 @@ For debugging, use PyCharm 2024.03 or later is recommended.<br />
        4. 提供动态的最大/最小Y轴范围并通过全局样式选项优化用户观看体验。
     3. 具有强大数据操作能力的`pandas`库用于读取`csv`文件并转换成`DataFrame`，通过`apply`函数灵活地对列数据进行批量转换，且在数据过滤中实现了针对特定条件的数据的修改。
 4. **其他**
-    1. 使用`sys`和`subprocess`库实现三方库的自动安装。
+    1. 使用`sys`和`subprocess`库实现第三方库的自动安装。
     2. 整个项目使用面向对象编程（OOP），实现低耦合高内聚，使得功能代码更易重构和扩展。
     3. 代码的逻辑对路径处理与包安装等关键环节都使用`os`与`sys`处理而不是直接使用相对路径或绝对路径，使程序具有跨平台运行的潜力。
     4. 引入`batch`文件脱离对IDE的依赖，不需要繁杂的安装与配置过程。

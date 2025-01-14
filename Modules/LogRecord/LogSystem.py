@@ -52,9 +52,11 @@ class BaseLog:
 
     @staticmethod
     def load_config() -> dict:
-        filepath = os.path.join(os.path.dirname(__file__), "LoggerConfig.json")
-        with open(file=filepath, mode="r") as config_file:
-            return json.load(config_file)
+        if not hasattr(BaseLog, "_cached_config"):
+            filepath = os.path.join(os.path.dirname(__file__), "LoggerConfig.json")
+            with open(file=filepath, mode="r") as config_file:
+                BaseLog._cached_config = json.load(config_file)
+        return BaseLog._cached_config
 
     def debug(self, msg: str):
         self.logger.debug(msg)

@@ -38,15 +38,15 @@ class BatteryLoggingExtractor:
                 raise ValueError(errmsg)
 
 
-    def __movefile(self, sp: str, dp: str, count: int) -> bool:
+    def __movefile(self, sp: str, dp: str, count: int, total: int) -> bool:
         try:
             os.remove(dp)
             shutil.move(src=sp, dst=dp)
-            log_info = f"[{count}] Successfully overwritten Xiaomi Log. Name:{os.path.basename(dp)}."
+            log_info = f"Successfully overwritten Xiaomi Log. Name:{os.path.basename(dp)}. Count:{count}/{total}."
             self.log.info(log_info)
             return True
         except OSError as e:
-            log_error = f"[{count}]An error occurred while overwriting Xiaomi Log. Details: {e.strerror}"
+            log_error = f"An error occurred while overwriting Xiaomi Log. Details: {e.strerror} Count:{count}/{total}."
             self.log.error(log_error)
 
         return False
@@ -56,7 +56,10 @@ class BatteryLoggingExtractor:
         try:
             step = 1
             if not filepath.startswith("bugreport") and not filepath.endswith(".zip"):
-                log_warn1_mcf = f"No compress file found in '{filepath}'.'"
+                count["failure"] += 1
+                total = count["success"] + count["failure"]
+
+                log_warn1_mcf = f"No compress file found in '{filepath}'. Count:{total}/{count["total"]}."
                 logger.warn(log_warn1_mcf)
                 logger.stop()
                 return None
@@ -74,14 +77,17 @@ class BatteryLoggingExtractor:
                 self.__manage_temp_dir(option="crt", tp=temp)
 
                 try:
-                    with zipfile.ZipFile(current_file, "r") as zip_ref:
+                    with zipfile.ZipFile(file=current_file, mode="r") as zip_ref:
                         zip_ref.extractall(temp)
                         file_list = zip_ref.namelist()
 
                 except zipfile.BadZipFile as e:
-                    log_error1_mcf = (f"Decompression process failed for '{current_file}' on process {step}, "
-                                      f"maybe this compressed file is corrupted. Details: {str(e)}")
-                    logger.error(log_error1_mcf)
+                    count["failure"] += 1
+                    total = count["success"] + count["failure"]
+                    log_warn_mcf = (f"Decompression process failed for '{current_file}' on process {step}, "
+                                    f"maybe this compressed file is corrupted. Details: {str(e)}. "
+                                    f"Count: {total}/{count["total"]}.")
+                    logger.warn(log_warn_mcf)
                     logger.stop()
                     return None
 
@@ -97,8 +103,9 @@ class BatteryLoggingExtractor:
                     current_file = nested_zip
                     step += 1
                 else:
-                    count.value += 1
-                    log_info_mcf = f"Decompression finished. Count:{count.value}."
+                    count["success"] += 1
+                    total = count["success"] + count["failure"]
+                    log_info_mcf = f"Decompression finished. Count:{total}/{count["total"]}."
                     logger.info(log_info_mcf)
 
                     log_debug3_mcf = (f"Decompression process {step}: No nested zip file found."
@@ -114,23 +121,26 @@ class BatteryLoggingExtractor:
 
     def compress_xiaomi_log(self, filepath: str | list[str]) -> list[str] | None:
         if not filepath:
-            log_warn1 = "No log file found."
-            self.log.warn(log_warn1)
+            log_error = "No log file was found."
+            self.log.error(log_error)
             return None
-
-        zipfile_count = Manager().Value("i", 0)
 
         self.__manage_temp_dir(option="reset", tp=self.tep)
 
-        filepath = list(filepath) if isinstance(filepath, list) else filepath
-
         processed_files = []
 
-        # "psutil" library cannot be use because it will cause some troublesome problems that may not have suitable solution
-        if len(filepath) < os.cpu_count():
-            workers = len(filepath)
+        filepath = [filepath] if isinstance(filepath, str) else filepath
+        total_files = len(filepath)
+        zipfile_count = Manager().dict({"success": 0, "failure": 0, "total": total_files})
+
+        # "psutil" library cannot be use because it will cause some troublesome problems that may not have suitable solution currently
+        if total_files < os.cpu_count():
+            workers = total_files
         else:
             workers = os.cpu_count()
+
+        log_debug = f"{workers} worker(s) started."
+        self.log.debug(log_debug)
 
         with ProcessPoolExecutor(workers) as executor:
             futures = [executor.submit(self._multi_compress_func, file, zipfile_count) for file in filepath]
@@ -140,16 +150,30 @@ class BatteryLoggingExtractor:
                 if result:
                     processed_files.extend(result)
 
-        match zipfile_count.value:
-            case 0:
-                log_error = "Failed to decompress any Xiaomi log files."
-                self.log.error(log_error)
-            case 1:
-                log_info = "Successfully decompressed 1 Xiaomi log file."
-                self.log.info(log_info)
-            case _:
-                log_info = f"Successfully decompressed {zipfile_count.value} Xiaomi log files."
-                self.log.info(log_info)
+        def compress_info_display(count: Manager) -> None:
+            is_error = False
+            match count["success"]:
+                case 0:
+                    log_text = "Not any Xiaomi log files was decompressed successfully"
+                    is_error = True
+                case 1:
+                    log_text = f"1 Xiaomi log file was decompressed successfully"
+                case _:
+                    log_text = f"{count['success']} Xiaomi log files were decompressed successfully"
+
+            match count["failure"]:
+                case 0:
+                    log_text += "."
+                case _:
+                    log_text += f", and {count["failure"]} failed."
+
+            if is_error:
+                self.log.error(log_text)
+            else:
+                self.log.info(log_text)
+
+
+        compress_info_display(zipfile_count)
 
         return processed_files
 
@@ -217,7 +241,7 @@ class BatteryLoggingExtractor:
                     if ans == "y":
                         filecount = 1
                         for dst_path, src_path in to_overwrite_files:
-                            if self.__movefile(sp=src_path, dp=dst_path, count=filecount):
+                            if self.__movefile(sp=src_path, dp=dst_path, count=filecount, total=num):
                                 founded_files.append(dst_path)
 
                             filecount = filecount + 1 if filecount < num else num
@@ -231,7 +255,8 @@ class BatteryLoggingExtractor:
                         self.log.warn(log_warn1)
             else:
                 filecount = 1
-                log_info2 = f"System has found {num} {"file" if num == 1 else "files"} with the same name."
+                grammar_suit = "file" if num == 1 else "files"
+                log_info2 = f"System has found {num} {grammar_suit} with the same name."
                 self.log.info(log_info2)
 
                 log_info3 = "Now you can make decisions to retain the file or replace it."
@@ -262,7 +287,7 @@ class BatteryLoggingExtractor:
                         self.log.debug(log_debug2)
 
                         if ans == "y":
-                            if self.__movefile(sp=src_path, dp=dst_path, count=filecount):
+                            if self.__movefile(sp=src_path, dp=dst_path, count=filecount, total=num):
                                 founded_files.append(dst_path)
 
                             filecount = filecount + 1 if filecount < num else num
@@ -275,6 +300,7 @@ class BatteryLoggingExtractor:
                             self.log.error(log_error)
 
         self.__manage_temp_dir(option="del")
+
         if len(founded_files) > 0:
             log_info6 = f"Found {len(founded_files)} Xiaomi Log file(s)."
             self.log.info(log_info6)

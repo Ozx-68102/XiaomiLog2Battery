@@ -35,7 +35,7 @@ echo Current Python version: %PYTHON_VERSION%
 echo OK.
 
 
-echo Checking venv folder
+echo Checking venv folder...
 REM Step 2: Check if .venv exists
 if exist ".venv" (
     where /r .venv * >nul 2>&1

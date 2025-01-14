@@ -91,17 +91,26 @@ class Searching:
                 multi_log.debug(log_debug1)
 
             except OSError as e:
-                log_error = f"An error occurred while opening a file. Details: {e.strerror}, Path:{filepath}."
+                count["failure"] += 1
+                total = count["success"] + count["failure"]
+
+                log_error = f"An error occurred while opening a file. Details: {e.strerror}, Path:{filepath}. Count: {total}/{count["total"]}."
                 multi_log.error(log_error)
                 multi_log.stop()
                 return None
             except ValueError as e:
-                log_error = f"An ValueError occurred while opening a file. Details: {str(e)}."
+                count["failure"] += 1
+                total = count["success"] + count["failure"]
+
+                log_error = f"An ValueError occurred while opening a file. Details: {str(e)}. Count: {total}/{count["total"]}."
                 multi_log.error(log_error)
                 multi_log.stop()
                 return None
             except Exception as e:
-                log_error = f"An error occurred while opening a file. Details: {str(e)}."
+                count["failure"] += 1
+                total = count["success"] + count["failure"]
+
+                log_error = f"An error occurred while opening a file. Details: {str(e)}. Count: {total}/{count["total"]}."
                 multi_log.error(log_error)
                 multi_log.stop()
                 return None
@@ -126,9 +135,10 @@ class Searching:
             log_debug2 = f"Xiaomi Log information has caught: {log_information}."
             multi_log.debug(log_debug2)
 
-            count.value += 1
+            count["success"] += 1
+            total = count["success"] + count["failure"]
 
-            log_info1 = f"Log information has been matched. Count: {count.value}."
+            log_info1 = f"Log information has been matched. Count: {total}/{count["total"]}."
             multi_log.info(log_info1)
         finally:
             multi_log.stop()
@@ -136,15 +146,24 @@ class Searching:
         return log_information
 
     def search_info(self, filepath: str | list[str]) -> list[dict[str, str]] | None:
-        filepath = [filepath] if isinstance(filepath, str) else filepath
+        if not filepath:
+            log_error = "No log file was found."
+            self.log.error(log_error)
+            return None
 
         log_files = []
-        log_count = Manager().Value("i", 0)
 
-        if len(filepath) < os.cpu_count():
-            workers = len(filepath)
+        filepath = [filepath] if isinstance(filepath, str) else filepath
+        total_files = len(filepath)
+        log_count = Manager().dict({"success": 0, "failure": 0, "total": total_files})
+
+        if total_files < os.cpu_count():
+            workers = total_files
         else:
             workers = os.cpu_count()
+
+        log_debug = f"{workers} worker(s) started."
+        self.log.debug(log_debug)
 
         with ProcessPoolExecutor(workers) as executor:
             futures = [executor.submit(self._multi_search_info, file, log_count) for file in filepath]
@@ -155,13 +174,27 @@ class Searching:
                 if result:
                     log_files.append(result)
 
-        if log_count.value == 0 and len(log_files) == 0:
-            log_error = "Failed to find any information."
-            self.log.error(log_error)
-            return None
-        elif log_count.value == len(log_files) and len(log_files) > 0:
-            log_info = f"Successfully found {log_count.value} information."
-            self.log.info(log_info)
+        def search_battery_capacity_info_display(count: Manager) -> None:
+            is_error = False
+            match count["success"]:
+                case 0:
+                    log_text = "Not any information was found"
+                    is_error = True
+                case _:
+                    log_text = f"{count["success"]} information was found successfully"
+
+            match count["failure"]:
+                case 0:
+                    log_text += "."
+                case _:
+                    log_text += f", and {count["failure"]} failed."
+
+            if is_error:
+                self.log.error(log_text)
+            else:
+                self.log.info(log_text)
+
+        search_battery_capacity_info_display(log_count)
 
         return log_files
 
