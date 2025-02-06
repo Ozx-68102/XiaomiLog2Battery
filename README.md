@@ -24,8 +24,8 @@ Usage:<br />
 For debugging, use PyCharm 2024.03 or later is recommended.<br />
 ****
 #### 已知问题 Known Issues
-在项目的日志记录系统中，文件日志记录存在有重复记录的问题，不影响正常使用，目前正在寻找解决办法。<br />
-In the project's logging system, there is a problem of duplicate records in file logging, which does not affect normal use. I am currently looking for a solution.
+在项目的日志记录系统中，文件日志记录存在有重复记录的问题，现已暂时通过数据的分块读取解决。<br />
+In the project's logging system, there is a problem of duplicate records in file logs. It has been temporarily solved by reading data in blocks.
 ****
 ####  技术栈 Technology Stacks
 **主编程语言：Python**

@@ -1,8 +1,8 @@
 import os
 from typing import Literal
 
-from Modules.FileProcess import BatteryLoggingExtractor, FolderOperator
 from Modules.DataAnalysis import Recording, Searching, Visualizing
+from Modules.FileProcess import BatteryLoggingExtractor, FolderOperator
 from Modules.LogRecord import Log
 
 
@@ -10,10 +10,11 @@ class ErrorChecker:
     def __init__(self, logs):
         self.log = logs
 
-    def check(self, data: str | list | bool | None, typ: Literal["compressed file", "Xiaomi log file", "battery information", "csv file", "line chart"]) -> None:
+    def check(self, data: str | list | None,
+              typ: Literal["compressed file", "Xiaomi log file", "battery information", "csv file", "charts"]) -> None:
         """ Check that the variables received by the main program are as expected, log them and terminate the program if necessary. """
         try:
-            valid_types = ["compressed file", "Xiaomi log file", "battery information", "csv file", "line chart"]
+            valid_types = ["compressed file", "Xiaomi log file", "battery information", "csv file", "charts"]
             if typ not in valid_types:
                 raise ValueError(f"'typ' must be one of {', '.join(valid_types)}, not '{typ}'.")
 
@@ -23,10 +24,8 @@ class ErrorChecker:
                 self._check_string(data, typ)
             elif isinstance(data, list):
                 self._check_list(data, typ)
-            elif isinstance(data, bool):
-                self._check_boolean(data, typ)
             else:
-                raise ValueError(f"Variable 'data' must be a list, string, or boolean, not '{type(data).__name__}'.")
+                raise ValueError(f"Variable 'data' must be a list, string, not '{type(data).__name__}'.")
         except ValueError as e:
             self._log_and_exit(str(e))
 
@@ -39,10 +38,13 @@ class ErrorChecker:
 
     def _check_list(self, data: list, typ: str) -> None:
         count = len(data)
-        if typ == "line chart":
-            count_true = sum(1 for item in data if item)
-            count_false = count - count_true
-            self.log.info(f"{count_true} file(s) visualized successfully, {count_false} file(s) failed.")
+        if typ == "charts":
+            count_success = data[0]
+            count_failure = data[1]
+            if count_success == count_failure == 0:
+                self._log_and_exit("Failed to visualize any data.")
+            else:
+                self.log.info(f"{count_success} data visualized successfully, and {count_failure} failed.")
         elif typ == "csv file":
             if count == 0:
                 self._log_and_exit(f"No {typ} was created.")
@@ -64,54 +66,49 @@ class ErrorChecker:
             else:
                 self._log_and_exit(f"No {typ} was found.")
 
-    def _check_boolean(self, data: bool, typ: str) -> None:
-        if typ != "line chart":
-            raise ValueError(f"When the type of 'data' is a boolean, 'typ' must be 'line chart', not '{typ}'.")
-        if not data:
-            self._log_and_exit("Failed to visualize battery information.")
-
     def _log_and_exit(self, message: str) -> None:
         self.log.error(message)
         exit(1)
 
 
-def main(cr: str, logger: Log):
+def initialize(cr: str, logger: Log) -> None:
     checker = ErrorChecker(logger)
 
     folder_operator = FolderOperator()
     compressed_files = folder_operator.file_recognition(os.path.join(cr, "zips"))
-    checker.check(compressed_files, "compressed file")
+    checker.check(data=compressed_files, typ="compressed file")
 
     logger.info("Preparing to extract log file(s). Please wait...")
-    battery_log_extractor = BatteryLoggingExtractor(cr)
+    battery_log_extractor = BatteryLoggingExtractor(current_path=cr)
     xiaomi_log = battery_log_extractor.find_xiaomi_log(battery_log_extractor.compress_xiaomi_log(compressed_files))
-    checker.check(xiaomi_log, "Xiaomi log file")
+    checker.check(data=xiaomi_log, typ="Xiaomi log file")
 
     logger.info("Preparing to search information in log file(s). Please wait...")
     searcher = Searching()
     battery_info = searcher.search_info(xiaomi_log)
-    checker.check(battery_info, "battery information")
+    checker.check(data=battery_info, typ="battery information")
 
     unique_nicknames = {info["nickname"] for info in battery_info}
 
     logger.info("Preparing to process data. Please wait...")
-    data_recorder = Recording(cr)
+    data_recorder = Recording(current_path=cr)
     csv_files = data_recorder.create_csv(unique_nicknames)
-    checker.check(csv_files, "csv file")
+    checker.check(data=csv_files, typ="csv file")
 
     processed_csv_files = data_recorder.data_processing(battery_info, csv_files)
-    checker.check(processed_csv_files, "csv file")
+    checker.check(data=processed_csv_files, typ="csv file")
 
     logger.info("Preparing to visualize data. Please wait...")
-    visualizer = Visualizing(cr)
-    line_chart_creation_results = [visualizer.pline_chart(csv_file) for csv_file in csv_files]
-    checker.check(line_chart_creation_results, "line chart")
+    visualizer = Visualizing(current_path=cr)
+    charts_result = [visualizer.diagrams_generator(filepath=csv_file) for csv_file in csv_files]
+    counts = [sum(result) for result in zip(*charts_result)]
+    checker.check(data=counts, typ="charts")
 
 
-if "__main__" == __name__:
+if __name__ == "__main__":
     log_filename = "Central.txt"
     log = Log(filename=log_filename)
     current = os.getcwd()
     log.info("Starting running the program now.")
     log.debug("Log module has been initialled successfully.")
-    main(cr=current, logger=log)
+    initialize(cr=current, logger=log)

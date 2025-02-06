@@ -37,7 +37,6 @@ class BatteryLoggingExtractor:
                 errmsg = f"'option' variable was expected to receive 'del', 'crt' or 'reset', not '{option}'."
                 raise ValueError(errmsg)
 
-
     def __movefile(self, sp: str, dp: str, count: int, total: int) -> bool:
         try:
             os.remove(dp)
@@ -114,10 +113,10 @@ class BatteryLoggingExtractor:
 
                     current_file = None
         finally:
-            logger.stop()
+            if hasattr(logger, "listener"):
+                logger.stop()
 
         return [os.path.join(temp, file) for file in file_list]
-
 
     def compress_xiaomi_log(self, filepath: str | list[str]) -> list[str] | None:
         if not filepath:
@@ -133,24 +132,26 @@ class BatteryLoggingExtractor:
         total_files = len(filepath)
         zipfile_count = Manager().dict({"success": 0, "failure": 0, "total": total_files})
 
-        # "psutil" library cannot be use because it will cause some troublesome problems that may not have suitable solution currently
-        if total_files < os.cpu_count():
-            workers = total_files
-        else:
-            workers = os.cpu_count()
+        # To avoid excessive usage of system resources contributing to hang by using batch processing
+        batch_size = 8
 
-        log_debug = f"{workers} worker(s) started."
-        self.log.debug(log_debug)
+        for i in range(0, total_files, batch_size):
+            # "psutil" library cannot be use because it will cause some troublesome problems that may not have suitable solution currently
+            workers = min(total_files, os.cpu_count(), 8)
+            batch_files = filepath[i:i + batch_size]
 
-        with ProcessPoolExecutor(workers) as executor:
-            futures = [executor.submit(self._multi_compress_func, file, zipfile_count) for file in filepath]
+            log_debug = f"{workers} worker(s) started."
+            self.log.debug(log_debug)
 
-            for future in futures:
-                result = future.result()
-                if result:
-                    processed_files.extend(result)
+            with ProcessPoolExecutor(max_workers=workers) as executor:
+                futures = [executor.submit(self._multi_compress_func, file, zipfile_count) for file in batch_files]
 
-        def compress_info_display(count: Manager) -> None:
+                for future in futures:
+                    result = future.result()
+                    if result:
+                        processed_files.extend(result)
+
+        def compress_info_display(count: Manager().dict) -> None:
             is_error = False
             match count["success"]:
                 case 0:
@@ -171,7 +172,6 @@ class BatteryLoggingExtractor:
                 self.log.error(log_text)
             else:
                 self.log.info(log_text)
-
 
         compress_info_display(zipfile_count)
 
@@ -211,18 +211,15 @@ class BatteryLoggingExtractor:
                     except FileNotFoundError as e:
                         log_error1 = f"File not found: {e.strerror}."
                         self.log.error(log_error1)
-                        self.__manage_temp_dir(option="del")
-                        return None
+                        continue
                     except (shutil.Error, OSError) as e:
                         log_error1 = f"An error occurred while finding Xiaomi Log: {e.strerror}."
                         self.log.error(log_error1)
-                        self.__manage_temp_dir(option="del")
-                        return None
+                        continue
                     except Exception as e:
                         log_error1 = f"An error occurred while finding Xiaomi Log: {str(e)}."
                         self.log.error(log_error1)
-                        self.__manage_temp_dir(option="del")
-                        return None
+                        continue
 
         # if there are files with same name, ask user whether process it batch
         if to_overwrite_files:
@@ -299,6 +296,8 @@ class BatteryLoggingExtractor:
                             log_error = "Invalid input. Please try again."
                             self.log.error(log_error)
 
+        log_info6 = "Extract Finished. Cleaning cache, please wait..."
+        self.log.info(log_info6)
         self.__manage_temp_dir(option="del")
 
         if len(founded_files) > 0:

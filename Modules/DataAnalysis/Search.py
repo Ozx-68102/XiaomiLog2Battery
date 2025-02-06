@@ -8,7 +8,7 @@ from Modules.LogRecord import Log, LogForMultiProc
 
 class Searching:
     def __init__(self) -> None:
-        self.logger_filename = "Searching.txt"
+        self.logger_filename = "Search.txt"
         self.log = Log(filename=self.logger_filename)
 
     def _multi_search_info(self, filepath: str, count: Manager) -> dict[str, str] | None:
@@ -157,22 +157,22 @@ class Searching:
         total_files = len(filepath)
         log_count = Manager().dict({"success": 0, "failure": 0, "total": total_files})
 
-        if total_files < os.cpu_count():
-            workers = total_files
-        else:
-            workers = os.cpu_count()
+        batch_size = 8
 
-        log_debug = f"{workers} worker(s) started."
-        self.log.debug(log_debug)
+        for i in range(0, total_files, batch_size):
+            workers = min(total_files, os.cpu_count(), 8)
+            batch_files = filepath[i:i + batch_size]
 
-        with ProcessPoolExecutor(workers) as executor:
-            futures = [executor.submit(self._multi_search_info, file, log_count) for file in filepath]
+            log_debug = f"{workers} worker(s) started."
+            self.log.debug(log_debug)
 
-            for future in futures:
-                result = future.result()
+            with ProcessPoolExecutor(max_workers=workers) as executor:
+                futures = [executor.submit(self._multi_search_info, file, log_count) for file in batch_files]
 
-                if result:
-                    log_files.append(result)
+                for future in futures:
+                    result = future.result()
+                    if result:
+                        log_files.append(result)
 
         def search_battery_capacity_info_display(count: Manager) -> None:
             is_error = False

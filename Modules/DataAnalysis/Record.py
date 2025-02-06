@@ -50,7 +50,7 @@ class Recording:
         if os.path.exists(csv_path):
             log_info1 = f"file {name} have already exists."
             self.log.info(log_info1)
-            time.sleep(0.01)
+            time.sleep(0.07)
 
             ans = None
             while ans not in ["y", "n"]:
@@ -104,32 +104,28 @@ class Recording:
             else:
                 return None
 
-    def create_csv(self, model: str | set[str | float] | None = None) -> str | list[str] | None:
+    def create_csv(self, model: set[str] | None = None) -> str | list[str] | None:
         """
         Create a csv file in "recorded_data" directory.
         :param model: Internal code of your smartphone, such as Xiaomi 14's internal code is `Houji`.
         :return: Success => `str` , Failure => `None`
         """
-        if not isinstance(model, str) and not isinstance(model, set):
+        if not isinstance(model, set):
             try:
-                ve_msg = f"ValueError: 'model' expected to receive a string or a set, not '{type(model).__name__}'."
+                ve_msg = f"ValueError: 'model' expected to receive a set, not '{type(model).__name__}'."
                 raise ValueError(ve_msg)
             except ValueError as e:
                 self.log.error(str(e))
                 return None
 
         csv_dir_path = os.path.join(self.file_path, "recorded_data")
-        if not os.path.exists(csv_dir_path):
-            os.makedirs(csv_dir_path)
+        os.makedirs(csv_dir_path, exist_ok=True)
 
-        if isinstance(model, set):
-            paths = []
-            for md in model:
-                cp = self.__crt_file_centre(md, csv_dir_path)
-                paths.append(cp if cp is not None else "")
-            return paths
-        elif isinstance(model, str):
-            return self.__crt_file_centre(model, csv_dir_path)
+        paths = []
+        for md in model:
+            cp = self.__crt_file_centre(md, csv_dir_path)
+            paths.append(cp if cp is not None else "")
+        return paths
 
     def __check_keys(self, data: dict) -> bool:
         columns_pre = [

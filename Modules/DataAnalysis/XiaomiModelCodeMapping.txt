@@ -1,0 +1,139 @@
+Kindly Note:
+Data accurate as of December 31, 2024
+
+=== Xiaomi 12 Series ===
+cupid => Xiaomi 12
+zeus => Xiaomi 12 Pro
+daumier => Xiaomi 12 Pro Dimensity Edition
+taoyao => Xiaomi 12 Lite
+psyche => Xiaomi 12X
+plato => Xiaomi 12T
+diting => Xiaomi 12T Pro / Redmi K50 Ultra
+mayfly => Xiaomi 12S
+unicorn => Xiaomi 12S Pro
+thor => Xiaomi 12S Ultra
+========================
+
+=== Xiaomi 13 Series ===
+fuxi => Xiaomi 13
+nuwa => Xiaomi 13 Pro
+ishtar => Xiaomi 13 Ultra
+aristotle => Xiaomi 13T
+ziyi => Xiaomi 13 Lite / Xiaomi Civi 2
+========================
+
+=== Xiaomi 14 Series ===
+houji => Xiaomi 14
+shennong => Xiaomi 14 Pro
+aurora => Xiaomi 14 Ultra
+degas => Xiaomi 14T
+rothko => Xiaomi 14T Pro / Redmi K70 Ultra
+chenfeng => Xiaomi 14 Civi / Xiaomi Civi 4 Pro
+========================
+
+== Xiaomi MIX Series ===
+odin => Xiaomi MIX 4
+cetus => Xiaomi MIX Fold
+zizhan => Xiaomi MIX Fold 2
+babylon => Xiaomi MIX Fold 3
+goku => Xiaomi MIX Fold 4
+ruyi => Xiaomi MIX Flip
+========================
+
+== Xiaomi Civi Series ==
+mona => Xiaomi Civi
+zijin => Xiaomi Civi 1S
+yuechu => Xiaomi Civi 3
+
+== Xiaomi Pad Series ===
+nabu => Xiaomi Pad 5
+elish => Xiaomi Pad 5 Pro WiFi
+enuma => Xiaomi Pad 5 Pro 5G
+dagu => Xiaomi Pad 5 Pro 12.4
+pipa => Xiaomi Pad 6
+liuqin => Xiaomi Pad 6 Pro
+yudi => Xiaomi Pad 6 Max
+sheng => Xiaomi Pad 6S Pro
+uke => Xiaomi Pad 7
+muyu => Xiaomi Pad 7 Pro
+========================
+
+==== Redmi K Series ====
+alioth => Redmi K40 / POCO F3
+haydn => Redmi K40 Pro / Redmi K40 Pro+ / Mi 11i
+ares => Redmi K40 Gaming Edition / POCO F3 GT
+munch => Redmi K40S / POCO F4
+rubens => Redmi K50
+matisse => Redmi K50 Pro
+ingres => Redmi K50 Gaming Edition / POCO F4 GT
+mondrian => Redmi K60 / POCO F5 Pro
+socrates => Redmi K60 Pro
+rembrandt => Redmi K60E
+vermeer => Redmi K70 / POCO F6 Pro
+manet => Redmi K70 Pro
+duchamp => Redmi K70E / POCO X6 Pro 5G
+zorn => REDMI K80
+miro => REDMI K80 Pro
+========================
+
+===== Redmi Series =====
+fog => Redmi 10 / Redmi 10C / Redmi 10 Power
+selene => Redmi 10 / Redmi 10 2022 / Redmi 10 Prime / Redmi 10 Prime 2022
+light => Redmi 10 5G / POCO M4 5G / Redmi Note 11R / Redmi 11 Prime 5G / Redmi Note 11E 5G
+rock => Redmi 11 Prime / POCO M5
+fire => Redmi 12
+sky => Redmi 12 5G / Redmi 12R / Redmi Note 12R / POCO M6 Pro 5G
+earth => Redmi 12C / POCO C55
+moon => Redmi 13 / POCO M6
+breeze => Redmi 13 5G / Redmi Note 13R / POCO M6 Plus 5G
+gale => Redmi 13C / POCO C65
+air => Redmi 13C 5G / POCO M6 5G / Redmi 13R 5G
+lake => Redmi 14C / POCO C75 / Redmi A3 Pro
+flame => Redmi 14C 5G / POCO M7 5G / Redmi 14R 5G
+========================
+
+== Redmi Note Series ===
+camellian => Redmi Note 10 5G / Redmi Note 10T / POCO M3 Pro 5G
+sweet => Redmi Note 10 Pro / Redmi Note 12 Pro
+sweetin => Redmi Note 10 Pro / Redmi Note 10 Pro Max
+chopin => Redmi Note 10 Pro / POCO X3 GT
+rosemary => Redmi Note 10S / POCO M5S / Redmi Note 11 SE
+lilac => Redmi Note 10T
+spes/spesn => Redmi Note 11
+selenes => Redmi Note 11 4G
+evergo => Redmi Note 11 5G / Redmi Note 11T / POCO M4 Pro 5G
+pissarro => Redmi Note 11 Pro / Redmi Note 11 Pro+ / Xiaomi 11i / Xiaomi 11i HyperCharge
+viva/vida => Redmi Note 11 Pro
+veux => Redmi Note 11E Pro / POCO X4 Pro 5G / Redmi Note 11 Pro 5G / Redmi Note 11 Pro+ 5G
+fleur => Redmi Note 11S / POCO M4 Pro
+opal => Redmi Note 11S 5G
+xaga => Redmi Note 11T Pro / Redmi K50i / POCO X4 GT / Redmi Note 11T Pro+
+lightcm => Redmi Note 11R
+topaz/tapas => Redmi Note 12
+ruby => Redmi Note 12 Pro / Redmi Note 12 Discovery Edition / Redmi Note 12 Pro+
+redwood => Redmi Note 12 Pro Speed Edition / POCO X5 Pro 5G
+sea => Redmi Note 12S
+marble => Redmi Note 12 Turbo / POCO F5
+pearl => Redmi Note 12T Pro
+sapphire/sapphiren => Redmi Note 13
+gold => Redmi Note 13 5G / POCO X6 Neo / Redmi Note 13R Pro
+emerald => Redmi Note 13 Pro / POCO M6 Pro
+garnet => Redmi Note 13 Pro / POCO X6 5G
+zircon => Redmi Note 13 Pro+
+beryl => Redmi Note 14 5G / POCO M7 Pro
+malachite => Redmi Note 14 Pro / POCO X7
+amethyst => Redmi Note 14 Pro+
+========================
+
+== Redmi Turbo Series ==
+peridot => Redmi Turbo 3 / POCO X7 Pro
+rodin => Redmi Turbo 4 / POCO F6
+========================
+
+=== Redmi Pad Series ===
+yunluo => Redmi Pad
+dizi => Redmi Pad Pro / POCO Pad
+ruan => Redmi Pad Pro 5G / POCO Pad 5G
+xun => Redmi Pad SE
+flare => Redmi Pad SE 8.7
+spark => Redmi Pad SE 8.7 4G
