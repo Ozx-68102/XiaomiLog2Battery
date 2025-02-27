@@ -9,7 +9,7 @@ Please note that the battery capacity analyzed through this project might differ
 #### 信息 Information
 Python 版本：**3.13.0**<br />
 主程序：`Central.py`, 目前仅支持**英语**。<br />
-运行方式：<br />
+运行方式：**（暂不可用）**<br />
 1. 将小米日志原文件（类似于`bugreport-2024-10-01-001217.zip`之类的名字）复制到`zips`文件夹下，然后双击`Start.bat`文件。<br />
 2. 使用PyCharm 2024.1.7及以上版本，新建项目，然后把下载的文件剪切进去，运行`Check_packages.py`安装所需包，将日志文件拷贝到`zips`文件夹下，再运行主程序。<br />
 
@@ -17,19 +17,15 @@ Python 版本：**3.13.0**<br />
 
 Python version **3.13.0**<br />
 Main program name: `Central.py`, only **English** is supported at the moment.<br />
-Usage:<br />
+Usage **(Temporarily Unavailable)**:<br />
 1. Copy the original Xiaomi log file (with a name similar to `bugreport-2024-10-01-001217.zip`) to the folder named `zips` , and double-click `Start.bat` file.<br />
 2. Using PyCharm 2024.1.7 and above to create a new project, then cut the downloaded file into it, and run `Check_packages.py` to install the required packages. Then, copy log files into the `zips` folder, and run the main program.<br />
 
 For debugging, use PyCharm 2024.03 or later is recommended.<br />
 ****
-#### 已知问题 Known Issues
-在项目的日志记录系统中，文件日志记录存在有重复记录的问题，现已暂时通过数据的分块读取解决。<br />
-In the project's logging system, there is a problem of duplicate records in file logs. It has been temporarily solved by reading data in blocks.
-****
 ####  技术栈 Technology Stacks
 **主编程语言：Python**
-1. **日志记录模块（LogRecord）**
+1. **日志记录模块（LogRecord）-暂时移除-**
     1. 核心功能通过`Python`内置的`logging`和`logging.handlers`库实现日志记录。
     2. 使用`RotatingFileHandler`实现日志文件的大小轮换，避免日志文件过大造成的问题。
     3. 针对多进程环境使用`multiprocessing.Queue`和`QueueHandler`结合`QueueListener`同步日志记录，保证进程安全。
@@ -60,7 +56,7 @@ In the project's logging system, there is a problem of duplicate records in file
 <br />
 
 **Main Programming Language: Python**
-1. **Log Recording Module (LogRecord)**
+1. **Log Recording Module (LogRecord) - temporarily remove**
     1. Core functionality is implemented using Python's built-in `logging` and `logging.handlers` libraries.
     2. Utilizes `RotatingFileHandler` to handle log file size rotation, preventing oversize log files. 
     3. Ensures process-safe logging in multiprocess environments by combining `multiprocessing.Queue`, `QueueHandler`, and `QueueListener`.

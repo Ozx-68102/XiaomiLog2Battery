@@ -297,8 +297,7 @@ class Visualizing:
                 chart_data.append(("Lost Capacity Percentage", lost_percentage))
 
             chart = Pie(init_opts=opts.InitOpts(theme=ThemeType.LIGHT))
-            chart.add("", chart_data, radius=["50%", "70%"], label_opts=opts.LabelOpts(is_show=False),
-                      is_clockwise=False)
+            chart.add("", chart_data, radius=["50%", "70%"], label_opts=opts.LabelOpts(is_show=False), is_clockwise=False)
             chart.set_colors([health_color, "#999999"])
             chart.set_global_opts(
                 title_opts=opts.TitleOpts(

@@ -1,0 +1,334 @@
+{% extends "basicLayouts.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block contents %}
+    <section class="slice py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-6">
+                    <button type="button" class="btn btn-primary fw-bold" id="initialize-data-btn">
+                        Initialize Program
+                    </button>
+                    <button type="button" class="btn btn-primary fw-bold" id="log-data-upload-btn">
+                        Upload Log zip file(s)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Initialize Program Modal -->
+    <div class="modal fade" id="initialize-data-modal" tabindex="-1" role="dialog"
+         aria-labelledby="initialize-data-modal">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="initialize-data-modal-title">Initialize Program</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <label for="initialize-data-modal-select-file" class="form-label">
+                                Select file(s) here to initialize the program:
+                            </label>
+                            <input class="form-control" type="file" id="initialize-data-modal-select-file" multiple
+                                   required accept=".zip">
+                        </div>
+                    </div>
+                    <hr class="d-none" id="initialize-data-modal-separator"/>
+                    <div class="row">
+                        <!-- Show file list user upload here -->
+                        <div class="col-12 d-none" id="initialize-data-modal-file-list"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-dark" id="initialize-data-modal-reset">Reset</button>
+                    <button type="button" class="btn btn-primary" id="initialize-data-modal-submit">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload files Modal -->
+    <div class="modal fade" id="log-data-upload-modal" tabindex="-1" role="dialog"
+         aria-labelledby="log-data-upload-modal">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="log-data-upload-modal-title">Upload Zip File(s)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <label for="log-data-upload-modal-select-file" class="form-label">
+                                Select file(s) here:
+                            </label>
+                            <input class="form-control" type="file" id="log-data-upload-modal-select-file" multiple
+                                   required accept=".zip">
+                        </div>
+                    </div>
+                    <hr class="d-none" id="log-data-upload-modal-separator"/>
+                    <div class="row">
+                        <!-- Show file list user uploaded -->
+                        <div class="col-12 d-none" id="log-data-upload-modal-file-list"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-dark" id="log-data-upload-modal-reset">Reset</button>
+                    <button type="button" class="btn btn-primary" id="log-data-upload-modal-submit">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="position-fixed bottom-0 right-0 p-3" style="z-index: 5; right: 0; bottom: 0;">
+        <div class="toast toast-sm" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="mr-auto fw-bold" id="toast-title">Notification</strong>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body"></div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block JavaScripts %}
+    <script type="application/javascript">
+        $("body").ready(function () {
+            // save DOM element selector - related to "log-data-upload-modal"
+            const bg_upload_btn = $("#log-data-upload-btn");
+            const modal_self = $("#log-data-upload-modal");
+            const title = $("#log-data-upload-modal-title");
+            const select_file = $("#log-data-upload-modal-select-file");
+            const separator = $("#log-data-upload-modal-separator");
+            const file_list = $("#log-data-upload-modal-file-list");
+            const submit_btn = $("#log-data-upload-modal-submit");
+            const reset_btn = $("#log-data-upload-modal-reset");
+            const close_btn_topic = $("#log-data-upload-modal .btn-close");
+            const close_btn_bottom = $("#log-data-upload-modal .btn-secondary");
+
+            // save DOM element selector - related to "initialize-data-modal"
+            const id_btn = $("#initialize-data-btn");
+            const id_modal = $("#initialize-data-modal");
+            const id_title = $("#initialize-data-modal-title");
+            const id_select_file = $("#initialize-data-modal-select-file");
+            const id_separator = $("#initialize-data-modal-separator");
+            const id_file_list = $("#initialize-data-modal-file-list");
+            const id_submit_btn = $("#initialize-data-modal-submit");
+            const id_reset_btn = $("#initialize-data-modal-reset");
+            const id_close_btn_topic = $("#initialize-data-modal .btn-close");
+            const id_close_btn_bottom = $("#initialize-data-modal .btn-secondary");
+
+            function resetLogDataModalState() {
+                title.text("Upload Zip File(s)");
+                select_file.val(""); // empty file message
+                separator.addClass("d-none");   // hide separator
+                file_list.addClass("d-none").removeClass("text-danger").empty(); // empty input box
+                submit_btn.data("valid-files", []).addClass("disabled"); // prohibit the submit button
+                reset_btn.removeClass("disabled");
+                close_btn_topic.removeClass("disabled");
+                close_btn_bottom.removeClass("disabled");
+            }
+
+            function resetInitializeDataModalState() {
+                id_title.text("Initialize Program");
+                id_select_file.val("");
+                id_separator.addClass("d-none");
+                id_file_list.addClass("d-none").removeClass("text-danger").empty();
+                id_submit_btn.data("valid-files", []).addClass("disabled");
+                id_reset_btn.removeClass("disabled");
+                id_close_btn_topic.removeClass("disabled");
+                id_close_btn_bottom.removeClass("disabled");
+            }
+
+            function setToastText(text, callback) {
+                const toastEl = document.querySelector(".toast");
+                document.querySelector(".toast-body").innerHTML = text;     // Update the Toast content
+                callback(toastEl);  // Call the callback function
+            }
+
+            function showToast(toastEl) {
+                const duration = 4500;
+                // Check if the Toast is already displayed
+                if (toastEl.classList.contains("show")) {
+                    // If the Toast is already shown, only update the content and duration
+                    const toast = bootstrap.Toast.getInstance(toastEl);     // Get the existing Toast instance
+                    toast._config.delay = duration;     // Update the display duration
+                } else {
+                    // If the Toast is not displayed, create and show a new Toast
+                    const toast = new bootstrap.Toast(toastEl, {delay: duration});
+                    toast.show();
+                }
+            }
+
+            bg_upload_btn.click(function () {
+                resetLogDataModalState();
+                modal_self.modal("show");
+            });
+
+            select_file.change(function (event) {
+                const files = event.target.files;
+                let message = "<span class=\"fw-bold\">You have selected:</span><br />";
+                const validFiles = [];
+
+                file_list.addClass("d-none").removeClass("text-danger");
+                separator.removeClass("d-none");
+
+                Array.from(files).forEach(function (file) {
+                    if (file.name.endsWith(".zip")) {
+                        validFiles.push(file);
+                        message += validFiles.length + ". " + file.name + "<br />";
+                    }
+                });
+
+                if (validFiles.length > 0) {
+                    message += "<br /><span class=\"fw-bold\">PLEASE ATTENTION:</span><br />"
+                        + " Files that do not meet the requirements will be automatically ignored.";
+                    message += "<br /><span class=\"text-warning-emphasis\">DO NOT refresh the page when uploading, or program will be interrupted, and it may cause some unknown issues.</span>";
+                    file_list.html(message).removeClass("d-none");
+                    submit_btn.data("valid-files", validFiles).removeClass("disabled");
+                } else {
+                    message = "<span class=\"text-danger\"><strong>ERROR:</strong><br /> No valid zip file selected. Reselect it please.</span>"
+                    file_list.html(message).removeClass("d-none");
+                    submit_btn.data("valid-files", []).addClass("disabled");
+                    return false;
+                }
+            });
+
+            submit_btn.click(function () {
+                submit_btn.addClass("disabled");
+                reset_btn.addClass("disabled");
+                close_btn_topic.addClass("disabled");
+                close_btn_bottom.addClass("disabled");
+
+                const validFiles = $(this).data("valid-files");
+                let message;
+
+                if (validFiles && validFiles.length > 0) {
+                    const formData = new FormData();
+                    validFiles.forEach(function (file) {
+                        formData.append("files", file);
+                    });
+                    message = "<br /><span class=\"text-success\">Uploading files, please wait...</span>";
+                    file_list.append(message).removeClass("d-none");
+
+                    // in 'done' function: `data` is equal to `JSON.parse(jqXHR.responseText)`
+                    $.ajax({
+                        url: "/upload-zip-file",    // TODO: json data has already changed  [msg, failed_files]
+                        type: "POST",
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                    }).done(function (data, textStatus, jqXHR) {
+                        modal_self.modal("hide");
+                        message = "<span class=\"fw-bold\">Success!</span><br />"
+                            + "HTTP status: <span class=\"text-primary fw-bold\">"
+                            + jqXHR.status + "</span><br />" + data.msg;
+                        setToastText(message, showToast);
+                    }).fail(function (jqXHR, textStatus, errorThrown) {
+                        modal_self.modal("hide");
+                        const errorText = JSON.parse(jqXHR.responseText).msg
+                        message = "<span class=\"d-inline-block fw-bold\">Failed!</span><br />"
+                            + "HTTP status: <span class=\"text-danger fw-bold\">"
+                            + jqXHR.status + "</span><br /><strong>ERROR TEXT:</strong><br />" + errorText;
+
+                        if (errorThrown !== "NOT FOUND") {
+                            message += "<br />maybe there are more details:" + errorThrown;
+                        }
+
+                        setToastText(message, showToast);
+                    });
+                } else {
+                    separator.removeClass("d-none");
+                    message = "<span class=\"text-danger\"><strong>ERROR:</strong><br />You haven't selected any files yet. Please select at least one valid zip file.</span>";
+                    $(this).addClass("disabled");
+                    file_list.html(message).removeClass("d-none");
+                    return false;
+                }
+            });
+
+            reset_btn.click(function () {
+                resetLogDataModalState();
+            });
+
+            id_btn.click(function () {
+                resetInitializeDataModalState();
+                id_modal.modal("show");
+            });
+
+            id_select_file.change(function (event) {
+                const files = event.target.files;
+                const maxFile = 10;
+                let message;
+
+                if (files.length > maxFile) {
+                    message = "<span class=\"text-danger\"><strong>ERROR:</strong><br />You can only upload up to" + maxFile + "files.</span>";
+                    id_file_list.removeClass("d-none").html(message);
+                    $(this).empty();
+                    return false;
+                }
+
+                message = "<span class=\"fw-bold\">You have selected:</span><br />";
+                const validFiles = [];
+
+                id_file_list.addClass("d-none");
+                id_separator.removeClass("d-none");
+
+                Array.from(files).forEach(function (file) {
+                    if (file.name.endsWith(".zip")) {
+                        validFiles.push(file);
+                        message += validFiles.length + ". " + file.name + "<br />";
+                    }
+                });
+
+                if (validFiles.length > 0) {
+                    message += "<br /><span class=\"fw-bold\">PLEASE ATTENTION:</span><br />"
+                        + "Files that DO NOT meet the requirements will be automatically ignored.";
+                    message += "<br /><span class=\"text-warning-emphasis\">DO NOT refresh the page when uploading, or program will be interrupted.</span>";
+                    id_file_list.html(message).removeClass("d-none");
+                    id_submit_btn.data("valid-files", validFiles).removeClass("disabled");
+                } else {
+                    message = "<span class=\"text-danger\"><strong>ERROR:</strong><br /> No valid zip file selected. Reselect it please.</span>";
+                    id_file_list.html(message).removeClass("d-none");
+                    id_submit_btn.data("valid-files", []).addClass("disabled");
+                    return false;
+                }
+            });
+
+            id_submit_btn.click(function () {
+                id_submit_btn.addClass("disabled");
+                id_reset_btn.addClass("disabled");
+                id_close_btn_topic.addClass("disabled");
+                id_close_btn_bottom.addClass("disabled");
+
+                const validFiles = $(this).data("valid-files");
+                let message;
+
+                if (validFiles && validFiles.length > 0) {
+                    const formData = new FormData();
+                    validFiles.forEach(function (file) {
+                        formData.append("files", file);
+                    });
+                    message = "<br /><span class=\"text-success\">Uploading files, please wait...</span>";
+                    id_file_list.append(message).removeClass("d-none");
+
+                    $.ajax({
+                        url: "/initialize-data",
+                        type: "POST",
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                    }).done();
+                }
+
+            });
+        });
+    </script>
+{% endblock %}

@@ -158,7 +158,7 @@ class Searching:
         log_count = Manager().dict({"success": 0, "failure": 0, "total": total_files})
 
         batch_size = 8
-
+        
         for i in range(0, total_files, batch_size):
             workers = min(total_files, os.cpu_count(), 8)
             batch_files = filepath[i:i + batch_size]
