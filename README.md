@@ -1,3 +1,7 @@
+#### 注意 Attention
+**由于临近升学申请季，作者需要参加雅思考试并准备相关事宜，项目维护暂停。**<br />
+**Due to the approaching graduate school application season, I need to prioritize IELTS preparation and admission-related tasks, so project maintenance will be suspended.**
+****
 #### 简介 Simply Introduction
 通过小米手机日志去分析手机的电池容量。<br />
 A program which is analyzing battery capacity on logs from Xiaomi smartphones.
