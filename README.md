@@ -1,6 +1,6 @@
 #### 注意 Attention
 **由于临近升学申请季，作者需要参加雅思考试并准备相关事宜，项目维护暂停。如有需要，可以前往Releases下载并使用过往版本。**<br />
-**Due to the approaching graduate school application season, I need to prioritize IELTS preparation and admission-related tasks, so project maintenance will be suspended. If needed, you can visit Releases so as to download and use the past version program. **
+**Due to the approaching graduate school application season, I need to prioritize IELTS preparation and admission-related tasks, so project maintenance will be suspended. If needed, you can visit Releases so as to download and use the past version program.**
 ****
 #### 简介 Simply Introduction
 通过小米手机日志去分析手机的电池容量。<br />
