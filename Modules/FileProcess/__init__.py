@@ -1,2 +1,2 @@
-from Modules.FileProcess.BatteryLoggingExtractor import BatteryLoggingExtractor
+from Modules.FileProcess.BatteryLogProcessor import BatteryLogProcessor
 from Modules.FileProcess.FolderOperator import FolderOperator

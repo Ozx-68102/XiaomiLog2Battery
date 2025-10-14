@@ -3,8 +3,6 @@ import time
 
 import pandas as pd
 
-from Modules.LogRecord import Log
-
 
 class Recording:
     def __init__(self, current_path: str) -> None:
