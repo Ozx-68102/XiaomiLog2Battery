@@ -4,6 +4,10 @@ import sqlite3
 from Modules.FileProcess.FolderOperator import INSTANCE_PATH
 
 DB_PATH = os.path.join(INSTANCE_PATH, "database.db")
+DB_FIELDS = [
+    "log_capture_time", "estimated_battery_capacity", "last_learned_battery_capacity", "min_learned_battery_capacity",
+    "max_learned_battery_capacity", "phone_brand", "nickname", "system_version"
+]
 
 
 def _get_connection() -> sqlite3.Connection:
@@ -37,9 +41,14 @@ def init_database() -> None:
         CREATE INDEX IF NOT EXISTS idx_log_capture_time
         ON analysis_results (log_capture_time)
         """
+        create_uni_idx_statement = """
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_uni_log
+        ON analysis_results (log_capture_time, nickname)
+        """
 
         cur.execute(create_table_statement)
         cur.execute(create_index_statement)
+        cur.execute(create_uni_idx_statement)
 
 
 def save_data(data: dict[str, str | int]) -> int | None:
@@ -49,14 +58,14 @@ def save_data(data: dict[str, str | int]) -> int | None:
     :return: The id of the newly inserted record.
     """
     with _get_connection() as conn:
-        cur = conn.cursor()
+        fields_str = ", ".join(DB_FIELDS)
+        placeholders_str = ", ".join(["?"] * len(DB_FIELDS))
 
-        cur.execute("""
-        INSERT INTO analysis_results (
-            log_capture_time, estimated_battery_capacity, last_learned_battery_capacity,
-            min_learned_battery_capacity, max_learned_battery_capacity, phone_brand, nickname, system_version
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (data["log_capture_time"], data["estimated_battery_capacity"], data["last_learned_battery_capacity"], data["min_learned_battery_capacity"], data["max_learned_battery_capacity"], data["phone_brand"], data["nickname"], data["system_version"]))
+        cur = conn.cursor()
+        cur.execute(
+            f"INSERT INTO analysis_results ({fields_str}) VALUES ({placeholders_str})",
+            [data[field] for field in DB_FIELDS]
+        )
 
         return cur.lastrowid
 
