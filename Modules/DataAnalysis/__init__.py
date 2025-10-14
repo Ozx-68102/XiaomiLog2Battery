@@ -1,3 +1,3 @@
 from Modules.DataAnalysis.BatteryDataService import BatteryDataService
 from Modules.DataAnalysis.BatteryInfoParser import BatteryInfoParser
-# from Modules.DataAnalysis.Visualization import Visualizing
+from Modules.DataAnalysis.PlotlyVisualizer import PlotlyVisualizer
