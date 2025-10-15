@@ -3,8 +3,9 @@ import sys
 
 
 def check_and_install_packages():
+    # TODO: dash-uploader version: 0.7.0a2 prerelease
     required_packages = [
-        "pyecharts", "pandas", "plotly", "dash", "dash-bootstrap-components", "json"
+        "pyecharts", "pandas", "plotly", "dash", "dash-uploader", "dash-bootstrap-components", "json"
     ]
     count = 0
     for package in required_packages:

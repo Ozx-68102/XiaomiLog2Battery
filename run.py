@@ -1,15 +1,9 @@
 import webbrowser
 from threading import Timer
 
-import dash
-from dash import html
+from Dashboard.app import app
 
-app = dash.Dash(__name__)
-app.layout = html.Div([
-    html.H1("Battery Log Analyzer", style={"textAlign": "center"})
-], style={"padding": "20px"})
 
-#
 def open_browser() -> None:
     webbrowser.open_new_tab("http://localhost:8050/")
 
