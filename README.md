@@ -1,90 +1,99 @@
 #### 简介 Simply Introduction
 通过小米手机日志去分析手机的电池容量。<br />
-A program which is analyzing battery capacity on logs from Xiaomi smartphones.
+A program which analyzes battery capacity from logs of Xiaomi smartphones.
 ****
 #### 注意事项 Precautions
 通过本项目分析得出的电池容量可能与官方售后检测结果有差异，一切请以官方检测的数据为准。<br />
-Please note that the battery capacity analyzed through this project might differ from the results of official after-sales inspections. All data should be considered definitive based on the official tests.
+Please note that the battery capacity analyzed by this project may differ from official after-sales inspection results. All data shall be subject to official test results.
 ****
 #### 信息 Information
-Python 版本：**3.13.0**<br />
-主程序：`Central.py`, 目前仅支持**英语**。<br />
-运行方式：**（暂不可用）**<br />
-1. 将小米日志原文件（类似于`bugreport-2024-10-01-001217.zip`之类的名字）复制到`zips`文件夹下，然后双击`Start.bat`文件。<br />
-2. 使用PyCharm 2024.1.7及以上版本，新建项目，然后把下载的文件剪切进去，运行`Check_packages.py`安装所需包，将日志文件拷贝到`zips`文件夹下，再运行主程序。<br />
+Python 版本要求：**3.13**<br />
+主程序启动入口：`run.py`，Web 界面语言：仅支持**英语**。<br />
+运行步骤：<br />
+1. 前置：确保已安装 Python 3.13（建议从 [Python 官网](https://www.python.org/) 下载）；<br />
+2. 依赖安装：运行 `PackageChecker.py`，程序会自动检测并安装所有必需的第三方库（无需手动执行 `pip install`）；<br />
+3. 启动服务：运行 `run.py`，程序会自动启动本地 Web 服务（默认地址：http://localhost:8050/），并打开浏览器跳转到分析面板；<br />
+4. 分析日志：在 Web 面板的上传区域，直接拖拽小米日志`zip`文件（如 `bugreport-2024-10-01-001217.zip`），系统会自动完成“解压→解析→数据存储→图表生成”，最终在页面显示结果。<br />
 
-如果需要调试运行的话，建议使用PyCharm 2024.03或以上版本。<br />
+调试建议：推荐使用 `PyCharm 2024.1.7` 及以上版本打开项目，便于代码调试。<br />
 
-Python version **3.13.0**<br />
-Main program name: `Central.py`, only **English** is supported at the moment.<br />
-Usage **(Temporarily Unavailable)**:<br />
-1. Copy the original Xiaomi log file (with a name similar to `bugreport-2024-10-01-001217.zip`) to the folder named `zips` , and double-click `Start.bat` file.<br />
-2. Using PyCharm 2024.1.7 and above to create a new project, then cut the downloaded file into it, and run `Check_packages.py` to install the required packages. Then, copy log files into the `zips` folder, and run the main program.<br />
+Python Version Requirement: **3.13**<br />
+Main Program Entry: `run.py`, Web Interface Language: **English only**.<br />
+Usage Steps:<br />
+1. Prerequisite: Ensure Python 3.13 is installed (recommended to download from [Python Official Website](https://www.python.org/));<br />
+2. Dependency Installation: Run `PackageChecker.py` — the program will automatically detect and install all required third-party libraries (no manual `pip install` needed);<br />
+3. Start Service: Run `run.py` — the program will automatically start a local Web server (default address: http://localhost:8050/) and open a browser to navigate to the analysis panel;<br />
+4. Analyze Logs: On the Web panel's upload area, drag and drop Xiaomi log `zip` files (e.g., `bugreport-2024-10-01-001217.zip`). The system will automatically complete "decompression→parsing→data storage→chart generation" and finally display results on the page.<br />
 
-For debugging, use PyCharm 2024.03 or later is recommended.<br />
+Debugging Suggestion: It is recommended to open the project with `PyCharm 2024.1.7` or later for easier code debugging.
 ****
-####  技术栈 Technology Stacks
+#### 技术栈 Technology Stacks
 **主编程语言：Python**
-1. **日志记录模块（LogRecord）-暂时移除-**
-    1. 核心功能通过`Python`内置的`logging`和`logging.handlers`库实现日志记录。
-    2. 使用`RotatingFileHandler`实现日志文件的大小轮换，避免日志文件过大造成的问题。
-    3. 针对多进程环境使用`multiprocessing.Queue`和`QueueHandler`结合`QueueListener`同步日志记录，保证进程安全。
-    4. 使用`json`库从日志配置文件`LoggerConfig.json`加载日志文件，从外部灵活调整日志格式、颜色与路径等参数，提高可维护性。
-    5. 自定义`ColorHandler`类，结合继承`logging.StreamHandler`类的自定义`StreamHandler`类实现带颜色的终端输出，使异常更容易被及时识别。
+
+1. **Web 交互与界面模块（Dashboard）**
+   - 基于 `Dash` 框架构建本地 Web 面板，实现页面布局、组件渲染与交互逻辑（如文件上传触发图表更新）；
+   - 使用 `dash-bootstrap-components` 优化 UI 结构（容器、卡片、行布局等），提升界面规整性；
+   - 集成 `dash-uploader==0.7.0a2` 组件，支持多文件拖拽上传，简化用户操作；
+   - 通过 `threading.Timer` 实现服务启动后自动打开浏览器，优化用户体验。
+
 2. **文件处理模块（FileProcess）**
-    1. 该模块与上述的`LogRecord`模块结合，实现全面的日志跟踪。
-    2. 使用内置的`os`和`shutil`库进行文件路径分析、文件夹的创建与删除，还有文件的覆盖等操作。
-    3. 使用内置`concurrent.futures`库的`ProcessPoolExecutor`来实现多进程并发处理解压任务，多进程的独立环境与自定义日志记录模块的适配避免了资源竞争问题。
-    4. 在多进程开始前根据文件的数量动态调整并发进程数。
-    5. `multiprocessing.Manager`用于跨进程共享变量，使程序能够精准统计解压任务数。
-    6. 将文件夹操作、日志记录与解压部分的逻辑分离，增强可维护性与可扩展性。
-    7. 使用Python内置的类型提示，提高代码可读性与静态类型检查能力。
-    8. 使用了`Python 3.10+`版本的`match...case...`语句，避免出现重复的`if`语句，同时这也是面向未来的写法。
-3. **数据分析模块（DataAnalysis）**
-    1. 和`LogRecord`模块结合实现日志追踪。
-    2. 使用`pyecharts`生成可交互式图表。根据数据量动态使用`Scatter`散点图和`Line`折线图适配，展现出其灵活性。
-       1. 当只有1条数据时折线图无法显示出数据，此时改为使用散点图呈现。
-       2. 有2条或以上数据时则使用折线图显示数据，结合自定义工具提示、交互式缩放等功能。
-       3. 使用`Grid`管理图表布局，确保样式协调。
-       4. 提供动态的最大/最小Y轴范围并通过全局样式选项优化用户观看体验。
-    3. 具有强大数据操作能力的`pandas`库用于读取`csv`文件并转换成`DataFrame`，通过`apply`函数灵活地对列数据进行批量转换，且在数据过滤中实现了针对特定条件的数据的修改。
-4. **其他**
-    1. 使用`sys`和`subprocess`库实现第三方库的自动安装。
-    2. 整个项目使用面向对象编程（OOP），实现低耦合高内聚，使得功能代码更易重构和扩展。
-    3. 代码的逻辑对路径处理与包安装等关键环节都使用`os`与`sys`处理而不是直接使用相对路径或绝对路径，使程序具有跨平台运行的潜力。
-    4. 引入`batch`文件脱离对IDE的依赖，不需要繁杂的安装与配置过程。
-<br />
+   - 负责小米日志 `zip` 文件的自动解压、 `txt` 日志提取与路径管理，核心依赖 Python 内置 `os` 库；
+   - 支持多文件并发处理，保障批量上传时的解析效率；
+   - 分离“解压逻辑”与“路径管理”，增强代码可维护性，便于后续扩展文件格式支持；
+   - 使用 Python 类型提示，提升代码可读性与静态类型检查适配性。
+
+3. **数据分析与可视化模块（DataAnalysis）**
+   - 数据处理：依赖 `pandas` 实现日志数据清洗（时间格式转换、无效容量值过滤）、平均容量计算与 DataFrame 结构化；
+   - 数据存储：引入 `sqlite3` 轻量级数据库替代本地 CSV 文件，提升相同数据体量下的存储效率，支持结构化查询；
+   - 可视化生成：基于 `plotly` 库创建交互式图表：
+     - 电池容量变化图：用 `plotly.subplots` 与 `go.Scatter` 实现多容量指标折线图（含平均值虚线），支持 hover 查看详情；
+     - 电池健康度饼图：用 `go.Pie` 实现环形饼图，按健康百分比自动匹配颜色（绿/橙/黄/红），直观展示剩余容量占比；
+   - 优化图表布局：固定宽高并调整图例位置，避免遮挡标题。
+
+4. **核心流程调度模块（Backend/Core）**
+   - 封装“文件上传->解压->解析->入库->图表生成”全链路逻辑，作为 Web 回调与业务模块的桥梁；
+   - 模块化设计（如 `BatteryDataService` 管理数据库交互、`PlotlyVisualizer` 负责图表生成），降低代码耦合度，便于扩展。
+
+5. **依赖管理工具**
+   - 基于 `sys` 与 `subprocess` 实现 `PackageChecker.py`，自动检测第三方库安装状态，缺失时自动执行安装；
+   - 对特定版本依赖（如 `dash-uploader==0.7.0a2`）进行版本校验，确保环境一致性。
+
+6. **跨平台适配**
+   - 使用 `os.path` 处理文件路径（如动态生成 `INSTANCE_PATH`），避免硬编码绝对路径，支持 Windows/macOS/Linux；
+   - 移除对 `.bat` 等系统脚本的依赖，统一通过 Python 脚本（`run.py`/`PackageChecker.py`）管理，简化跨平台使用。
+
 
 **Main Programming Language: Python**
-1. **Log Recording Module (LogRecord) - temporarily remove**
-    1. Core functionality is implemented using Python's built-in `logging` and `logging.handlers` libraries.
-    2. Utilizes `RotatingFileHandler` to handle log file size rotation, preventing oversize log files. 
-    3. Ensures process-safe logging in multiprocess environments by combining `multiprocessing.Queue`, `QueueHandler`, and `QueueListener`.
-    4. Loads log configurations from an external JSON file (LoggerConfig.json) using the `json` library, enabling flexible adjustment of log format, color, and paths for better maintainability.
-    5. Implements a custom ColorHandler class, which inherits from logging.StreamHandler, to enable colored terminal outputs for easier identification of exceptions.
+
+1. **Web Interaction & Interface Module (Dashboard)**
+   - Builds a local Web panel based on the `Dash` framework, enabling page layout, component rendering, and interaction logic (e.g., chart updates triggered by file uploads);
+   - Uses `dash-bootstrap-components` to optimize UI structure (containers, cards, row layouts, etc.) for better regularity;
+   - Integrates the `dash-uploader==0.7.0a2` component to support drag-and-drop upload of multiple files, simplifying user operations;
+   - Implements automatic browser opening after service startup via `threading.Timer` to enhance user experience.
 
 2. **File Processing Module (FileProcess)**
-    1. Integrates with the `LogRecord` module for comprehensive log tracking.
-    2. Uses built-in os and shutil libraries for file path analysis, directory creation, deletion, and file overwriting.
-    3. Leverages ProcessPoolExecutor from the `concurrent.futures` library for concurrent multiprocess handling of decompression tasks. This ensures independent process environments and avoids resource conflicts.
-    4. Dynamically adjusts the number of concurrent processes based on the number of files to be processed.
-    5. Uses `multiprocessing.Manager` for cross-process shared variables, enabling precise tracking of decompression tasks.
-    6. Separates logic for folder operations, log recording, and decompression to enhance maintainability and scalability.
-    7. Employs Python's type hinting to improve code readability and enable static type checking.
-    8. Implements the modern `match...case...` syntax (available in `Python 3.10+`), reducing redundant `if` statements and ensuring forward compatibility.
+   - Responsible for automatic decompression of Xiaomi log `zip` files, extraction of `txt` logs, and path management, with core dependencies on Python's built-in `os` library;
+   - Supports concurrent processing of multiple files to ensure parsing efficiency during batch uploads;
+   - Separates "decompression logic" from "path management" to improve code maintainability and facilitate future expansion of file format support;
+   - Uses Python type hints to enhance code readability and adaptability to static type checking.
 
-3. **Data Analysis Module (DataAnalysis)**
-    1. Integrates with the `LogRecord` module for log tracking.
-    2. Uses `pyecharts` to create interactive charts, adapting between Scatter and Line charts based on the amount of data:
-       1. Uses scatter plots for single data points, as line charts cannot display single points effectively.
-       2. Uses line charts for two or more data points, with custom tooltips, interactive zoom, and other features.
-       3. Manages chart layout with `Grid` to ensure a consistent appearance.
-       4. Dynamically adjusts Y-axis ranges and applies global style options for an optimized user experience.
-    3. Leverages the `pandas` library for powerful data manipulation, including reading `csv` files into `DataFrame` objects. Performs batch transformations on columns using the `apply` function and filters data to meet specific conditions.
+3. **Data Analysis & Visualization Module (DataAnalysis)**
+   - Data Processing: Relies on `pandas` for log data cleaning (time format conversion, invalid capacity filtering), average capacity calculation, and DataFrame structuring;
+   - Data Storage: Introduces the `sqlite3` lightweight database to replace local CSV files, improving storage efficiency for the same data volume and supporting structured queries;
+   - Visualization Generation: Creates interactive charts based on the `plotly` library:
+     - Battery Capacity Change Chart: Uses `plotly.subplots` and `go.Scatter` to implement a line chart for multiple capacity indicators (with a dashed average line), supporting hover for details;
+     - Battery Health Chart: Uses `go.Pie` to implement a donut chart, automatically matching colors (green/orange/yellow/red) based on health percentage to intuitively show remaining capacity ratio;
+   - Optimizes Chart Layout: Fixes width/height and adjusts legend position to avoid covering titles.
 
-4. **Others**
-    1. Uses `sys` and `subprocess` libraries to automate the installation of required third-party packages.
-    2. The entire project is implemented using Object-Oriented Programming (OOP), achieving low coupling and high cohesion, making the codebase easier to refactor and extend.
-    3. Handles critical operations like path management and package installation with `os` and `sys` libraries instead of relying on relative or absolute paths, enhancing cross-platform compatibility.
-    4. Includes `batch` files to eliminate dependency on IDEs, simplifying installation and configuration processes.
+4. **Core Process Scheduling Module (Backend/Core)**
+   - Encapsulates the end-to-end logic of "file upload->decompression->parsing->database storage->chart generation" as a bridge between Web callbacks and business modules;
+   - Modular design (e.g., `BatteryDataService` for database interaction, `PlotlyVisualizer` for chart generation) to reduce code coupling and facilitate expansion.
+
+5. **Dependency Management Tool**
+   - Implements `PackageChecker.py` based on `sys` and `subprocess` to automatically detect the installation status of third-party libraries and execute installation if missing;
+   - Performs version verification for specific dependencies (e.g., `dash-uploader==0.7.0a2`) to ensure environment consistency.
+
+6. **Cross-Platform Adaptation**
+   - Uses `os.path` to handle file paths (e.g., dynamic generation of `INSTANCE_PATH`), avoiding hard-coded absolute paths and supporting Windows/macOS/Linux;
+   - Removes dependencies on system scripts such as `.bat`, and unifies management via Python scripts (`run.py`/`PackageChecker.py`) to simplify cross-platform usage.
 ****
