@@ -62,7 +62,8 @@ class PlotlyVisualizer:
 
         df["avg_battery_capacity"] = df[self.capacity_fields].mean(axis=1)
 
-        fig = make_subplots(rows=1, cols=1, subplot_titles=[f"Battery Capacities of {model} Over Time"])
+        fig = make_subplots(rows=1, cols=1, subplot_titles=[f"Battery Capacities of {model} Over Time"],
+                            vertical_spacing=0.15)
 
         marker_symbols = ["circle", "triangle-up", "diamond", "square"]
         for index, field in enumerate(self.capacity_fields):
@@ -98,14 +99,14 @@ class PlotlyVisualizer:
                 name="Average Capacity",
                 mode="lines",
                 line={"width": 2, "dash": "dash", "color": "magenta"},
-                showlegend=True
+                showlegend=False
             ),
             row=1, col=1
         )
 
         fig.update_layout(
             height=600, width=800,
-            legend={"orientation": "h", "yanchor": "top", "y": 1.1, "xanchor": "center", "x": 0.5},
+            legend={"orientation": "h", "yanchor": "top", "y": 1.2, "xanchor": "center", "x": 0.5},
             xaxis={"tickangle": 30, "tickmode": "auto", "nticks": 10},
             yaxis={
                 "range": [
@@ -119,10 +120,10 @@ class PlotlyVisualizer:
 
     def gen_battery_health_chart(self, data: list[dict[str, str | int]]) -> go.Figure:
         df = self._preprocess_data(data)
-        lastest_10df = df.head(10)
-        model = df.loc[:, "nickname"].iloc[0].to_string()
+        lastest_10df = df.head(10).copy()
+        model = str(df.loc[:, "nickname"].iloc[0])
 
-        lastest_10df["single_composite_capacity"] = lastest_10df[self.capacity_fields].mean(axis=1)
+        lastest_10df.loc[:, "single_composite_capacity"] = lastest_10df.loc[:, self.capacity_fields].mean(axis=1)
         current_avg_cap = lastest_10df.loc[:, "single_composite_capacity"].mean()
         current_avg_cap = round(current_avg_cap, 0)
 
@@ -157,7 +158,7 @@ class PlotlyVisualizer:
                 values=[health_percent, lost_percent],
                 hole=0.5,
                 marker={
-                    "color": [health_color, "#999999"],
+                    "colors": [health_color, "#999999"],
                     "line": {"color": "white", "width": 2}
                 },
                 textinfo="label+percent",
@@ -169,7 +170,7 @@ class PlotlyVisualizer:
         fig.update_layout(
             height=500, width=500,
             title={
-                "text": f"Battery Health of {model}<br />Current Capacity: {current_avg_cap} / {model_standard_cap} mAh<br />Health: {health_percent}%",
+                "text": f"Battery Health of {model}<br />Current Capacity: {int(current_avg_cap)} / {int(model_standard_cap)} mAh<br />Health: {health_percent}%",
                 "x": 0.5, "y": 0.5, "font": {"size": 14, "weight": "bold"}
             }, showlegend=False
         )

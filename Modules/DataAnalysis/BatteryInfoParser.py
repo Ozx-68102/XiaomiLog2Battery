@@ -19,7 +19,7 @@ class BatteryInfoParser:
         """
         try:
             matched = re.search(pattern=fr"{cap_name}: \s*([\d.]+)\s*mAh", string=content)
-            return int(matched.group(1)) if matched else None
+            return int(float(matched.group(1))) if matched else None
         except re.error:
             return None
 
@@ -99,16 +99,21 @@ class BatteryInfoParser:
 
         return parsed_data
 
-    def parse_battery_info(self, lps: list[str]) -> list[dict[str, str | int]]:
-        if not isinstance(lps, list):
-            raise TypeError(f"Variable 'path' must be a list, not '{type(lps).__name__}'.")
+    def parse_battery_info(self, tps: list[str]) -> list[dict[str, str | int]]:
+        """
+        Parse battery information from the given path of files.
+        :param tps: A list of paths of txt files.
+        :return: A list of battery information.
+        """
+        if not isinstance(tps, list):
+            raise TypeError(f"Variable 'lps' must be a list, not '{type(tps).__name__}'.")
 
-        if not lps:
+        if not tps:
             return []
 
-        workers = min(len(lps), os.cpu_count(), 8)
+        workers = min(len(tps), os.cpu_count(), 8)
         with ProcessPoolExecutor(max_workers=workers) as executor:
-            futures: list[Future] = [executor.submit(self._parse_single_info, path) for path in lps]
+            futures: list[Future] = [executor.submit(self._parse_single_info, path) for path in tps]
 
             final_infos = []
             for future in futures:
