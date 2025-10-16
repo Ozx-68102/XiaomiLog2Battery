@@ -12,7 +12,7 @@ Python 版本要求：**3.13**<br />
 运行步骤：<br />
 1. 前置：确保已安装 Python 3.13（建议从 [Python 官网](https://www.python.org/) 下载）；<br />
 2. 依赖安装：运行 `PackageChecker.py`，程序会自动检测并安装所有必需的第三方库（无需手动执行 `pip install`）；<br />
-3. 启动服务：运行 `run.py`，程序会自动启动本地 Web 服务（默认地址：http://localhost:8050/），并打开浏览器跳转到分析面板；<br />
+3. 启动服务：运行 `run.py`，程序会自动启动本地 Web 服务（默认地址：http://localhost:8050/ ），并打开浏览器跳转到分析面板；<br />
 4. 分析日志：在 Web 面板的上传区域，直接拖拽小米日志`zip`文件（如 `bugreport-2024-10-01-001217.zip`），系统会自动完成“解压→解析→数据存储→图表生成”，最终在页面显示结果。<br />
 
 调试建议：推荐使用 `PyCharm 2024.1.7` 及以上版本打开项目，便于代码调试。<br />
@@ -22,7 +22,7 @@ Main Program Entry: `run.py`, Web Interface Language: **English only**.<br />
 Usage Steps:<br />
 1. Prerequisite: Ensure Python 3.13 is installed (recommended to download from [Python Official Website](https://www.python.org/));<br />
 2. Dependency Installation: Run `PackageChecker.py` — the program will automatically detect and install all required third-party libraries (no manual `pip install` needed);<br />
-3. Start Service: Run `run.py` — the program will automatically start a local Web server (default address: http://localhost:8050/) and open a browser to navigate to the analysis panel;<br />
+3. Start Service: Run `run.py` — the program will automatically start a local Web server (default address: http://localhost:8050/ ) and open a browser to navigate to the analysis panel;<br />
 4. Analyze Logs: On the Web panel's upload area, drag and drop Xiaomi log `zip` files (e.g., `bugreport-2024-10-01-001217.zip`). The system will automatically complete "decompression→parsing→data storage→chart generation" and finally display results on the page.<br />
 
 Debugging Suggestion: It is recommended to open the project with `PyCharm 2024.1.7` or later for easier code debugging.
