@@ -1,12 +1,12 @@
-#### 简介 Simply Introduction
+## 简介 Simply Introduction
 通过小米手机日志去分析手机的电池容量。<br />
 A program which analyzes battery capacity from logs of Xiaomi smartphones.
-****
-#### 注意事项 Precautions
+
+## 注意事项 Precautions
 通过本项目分析得出的电池容量可能与官方售后检测结果有差异，一切请以官方检测的数据为准。<br />
 Please note that the battery capacity analyzed by this project may differ from official after-sales inspection results. All data shall be subject to official test results.
-****
-#### 信息 Information
+
+## 信息 Information
 Python 版本要求：**3.13**<br />
 主程序启动入口：`run.py`，Web 界面语言：仅支持**英语**。<br />
 运行步骤：<br />
@@ -26,8 +26,8 @@ Usage Steps:<br />
 4. Analyze Logs: On the Web panel's upload area, drag and drop Xiaomi log `zip` files (e.g., `bugreport-2024-10-01-001217.zip`). The system will automatically complete "decompression→parsing→data storage→chart generation" and finally display results on the page.<br />
 
 Debugging Suggestion: It is recommended to open the project with `PyCharm 2024.1.7` or later for easier code debugging.
-****
-#### 技术栈 Technology Stacks
+
+## 技术栈 Technology Stacks
 **主编程语言：Python**
 
 1. **Web 交互与界面模块（Dashboard）**
@@ -96,4 +96,3 @@ Debugging Suggestion: It is recommended to open the project with `PyCharm 2024.1
 6. **Cross-Platform Adaptation**
    - Uses `os.path` to handle file paths (e.g., dynamic generation of `INSTANCE_PATH`), avoiding hard-coded absolute paths and supporting Windows/macOS/Linux;
    - Removes dependencies on system scripts such as `.bat`, and unifies management via Python scripts (`run.py`/`PackageChecker.py`) to simplify cross-platform usage.
-****
