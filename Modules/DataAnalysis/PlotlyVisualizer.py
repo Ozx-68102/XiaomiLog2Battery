@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from Modules.DataAnalysis import BatteryDataService
-from Modules.Database import DB_FIELDS
+from Modules.Database import TABLE_AR_FIELDS
 
 
 class PlotlyVisualizer:
@@ -14,7 +14,7 @@ class PlotlyVisualizer:
         self.model_caps = self._load_standard_caps()
         self.data_service = BatteryDataService()
 
-        self.capacity_fields = [field for field in DB_FIELDS if "battery_capacity" in field]
+        self.capacity_fields = [field for field in TABLE_AR_FIELDS if "battery_capacity" in field]
 
         # reasonable capacity range
         self.min_valid_cap = 1000

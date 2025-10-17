@@ -23,7 +23,7 @@ def init_graph(filepath_list: list[str]) -> html.Div | None:
     # TODO: Here and database end need to set a `TRUNCATE` logic to adapt to `initial graph` function.
     #  Otherwise it will throw Database Error when use it multiple time
     print("Start to save battery info to database.")
-    if not _data_service.save_battery_data(data=battery_info):
+    if not _data_service.init_battery_data(data=battery_info):
         print("Failed to save battery data.")
         return None
 

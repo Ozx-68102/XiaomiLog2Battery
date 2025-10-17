@@ -4,7 +4,7 @@ import sqlite3
 from Modules.FileProcess.FolderOperator import INSTANCE_PATH
 
 DB_PATH = os.path.join(INSTANCE_PATH, "database.db")
-DB_FIELDS = [
+TABLE_AR_FIELDS = [
     "log_capture_time", "estimated_battery_capacity", "last_learned_battery_capacity", "min_learned_battery_capacity",
     "max_learned_battery_capacity", "phone_brand", "nickname", "system_version"
 ]
@@ -12,20 +12,23 @@ DB_FIELDS = [
 
 def _get_connection() -> sqlite3.Connection:
     """
-    Open and return a sqlite3 connection.
+    Open and return a sqlite3 connection. If database does not exist, it will create it automatically.
     """
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     return sqlite3.connect(DB_PATH)
 
 
-def init_database() -> None:
+def init_table_ar() -> None:
     """
-    Initialize the database.
+    Use a series of SQL statements to initialize table called **analysis_results**.
+    If table exists, it will be dropped and recreated.
     """
     with _get_connection() as conn:
         cur = conn.cursor()
-        create_table_statement = """
-        CREATE TABLE IF NOT EXISTS analysis_results (
+
+        init_table = """
+        DROP TABLE IF EXISTS analysis_results;
+        CREATE TABLE analysis_results (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             log_capture_time TEXT NOT NULL,
             estimated_battery_capacity INTEGER NOT NULL,
@@ -35,44 +38,42 @@ def init_database() -> None:
             phone_brand TEXT NOT NULL COLLATE BINARY,
             nickname TEXT NOT NULL COLLATE BINARY,
             system_version TEXT NOT NULL COLLATE BINARY
-        )
-        """
-        create_index_statement = """
+        );
         CREATE INDEX IF NOT EXISTS idx_log_capture_time
-        ON analysis_results (log_capture_time)
-        """
-        create_uni_idx_statement = """
+        ON analysis_results (log_capture_time);
         CREATE UNIQUE INDEX IF NOT EXISTS idx_uni_log
         ON analysis_results (log_capture_time, nickname)
         """
 
-        cur.execute(create_table_statement)
-        cur.execute(create_index_statement)
-        cur.execute(create_uni_idx_statement)
+        cur.executescript(init_table)
 
 
-def save_data(data: dict[str, str | int]) -> int | None:
+def save_data_iar(data: dict[str, str | int]) -> int | None:
     """
-    Inserts a new row of battery analysis results into the database.
-    :param data: A dictionary containing the following keys: log_capture_time(str), estimated_battery_capacity(int), last_learned_battery_capacity(int), min_learned_battery_capacity(int), max_learned_battery_capacity(int), phone_brand(str), nickname(str), system_version(str)
-    :return: The id of the newly inserted record.
+    Inserts a new row of battery analysis results into the table **analysis_results**.
+    :param data: A dictionary containing the following keys: **log_capture_time** (str),
+     **estimated_battery_capacity** (int), **last_learned_battery_capacity** (int),
+     **min_learned_battery_capacity** (int), **max_learned_battery_capacity** (int), **phone_brand** (str),
+     **nickname** (str), **system_version** (str).
+    :return: The **id** of the newly inserted record.
     """
     with _get_connection() as conn:
-        fields_str = ", ".join(DB_FIELDS)
-        placeholders_str = ", ".join(["?"] * len(DB_FIELDS))
+        fields_str = ", ".join(TABLE_AR_FIELDS)
+        placeholders_str = ", ".join(["?"] * len(TABLE_AR_FIELDS))
 
         cur = conn.cursor()
         cur.execute(
             f"INSERT INTO analysis_results ({fields_str}) VALUES ({placeholders_str})",
-            [data[field] for field in DB_FIELDS]
+            [data[field] for field in TABLE_AR_FIELDS]
         )
 
         return cur.lastrowid
 
 
-def get_all_results() -> list[dict[str, str | int]]:
+def get_all_results_far() -> list[dict[str, str | int]]:
     """
-    Retrieves all analysis results from the database, ordered by capture time in descending order (most recent results first).
+    Retrieves all data from the table **analysis_results**,
+    ordered by capture time in descending order (most recent results first).
     :return: A list of dictionaries
     """
     with _get_connection() as conn:
@@ -82,9 +83,9 @@ def get_all_results() -> list[dict[str, str | int]]:
         return [dict(row) for row in cur.fetchall()]
 
 
-def get_results_by_time_range(start: str | None = None, end: str | None = None) -> list[dict[str, str | int]]:
+def get_results_by_time_range_far(start: str | None = None, end: str | None = None) -> list[dict[str, str | int]]:
     """
-    Queries analysis results within a specified time range.
+    Retrieves data within a specified time range from the table **analysis_results**.
     :param start: Optional start time (inclusive). Format example: "2025/10/01"
     :param end: Optional end time (inclusive). Format example: "2025/10/31"
     :return: A list of dictionaries

@@ -2,7 +2,7 @@ import os
 import re
 from concurrent.futures import ProcessPoolExecutor, Future
 
-from Modules.Database import DB_FIELDS
+from Modules.Database import TABLE_AR_FIELDS
 
 
 class BatteryInfoParser:
@@ -78,7 +78,7 @@ class BatteryInfoParser:
             "Estimated battery capacity", "Last learned battery capacity",
             "Min learned battery capacity", "Max learned battery capacity"
         ]
-        capacity_fields = [field for field in DB_FIELDS if "battery_capacity" in field]
+        capacity_fields = [field for field in TABLE_AR_FIELDS if "battery_capacity" in field]
         database_field_name = dict(zip(capacity_types, capacity_fields))
 
         if len(capacity_types) != len(capacity_fields):
@@ -94,7 +94,7 @@ class BatteryInfoParser:
             "log_capture_time": log_capture_time, **battery_capacities, **device_info
         }
 
-        if any(parsed_data.get(field) is None for field in DB_FIELDS):
+        if any(parsed_data.get(field) is None for field in TABLE_AR_FIELDS):
             return None
 
         return parsed_data
