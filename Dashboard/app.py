@@ -3,7 +3,7 @@ import os
 import dash
 import dash_bootstrap_components as dbc
 import dash_uploader as du
-from dash import html, Output
+from dash import dcc, html, Output, Input
 
 from Modules.Core import init_graph
 from Modules.FileProcess import INSTANCE_PATH
@@ -16,6 +16,7 @@ app.config.suppress_callback_exceptions = True
 du.configure_upload(app=app, folder=INSTANCE_PATH)
 
 app.layout = dbc.Container([
+    dcc.Store(id="js-update-prompt", data={"show": False, "msg": ""}),  # Will be modified by `upload-init-prompt.js`
     dbc.Row(
         dbc.Col(html.H1("Battery Log Analyzer", className="text-center my-4"), width=12)
     ),
@@ -54,18 +55,35 @@ app.layout = dbc.Container([
     dbc.Row(html.Div(id="output-container", style={"display": "flex", "flexDirection": "column", "gap": "10px"}))
 ], fluid=True, style={"padding": "15px"})
 
+def __show_alert(title: str, msg: list, color: str = "info", dismissable: bool | None = None) -> dbc.Alert:
+    return dbc.Alert([
+        html.H3(title),
+        html.Hr(),
+        html.Div(msg)
+    ], color=color, dismissable=dismissable)
+
+
+@app.callback(
+    Output(component_id="status-container", component_property="children", allow_duplicate=True),
+    Input(component_id="js-update-prompt", component_property="data"),
+    prevent_initial_call=True
+)
+def render_js_prompt(data: dict[str, str | bool]) -> dbc.Alert | html.Div:
+    if data.get("show") and data.get("msg") is not None:
+        return __show_alert(title="Uploading", msg=[data.get("msg")])
+
+    return html.Div()
+
 
 @du.callback(
     output=[
-        Output("status-container", "children"),
-        Output("output-container", "children"),
+        Output(component_id="status-container", component_property="children"),
+        Output(component_id="output-container", component_property="children")
     ],
     id="upload-component"
 )
 def handle_upload(status: du.UploadStatus) -> tuple[dbc.Alert | html.Div, dbc.Alert | html.Div]:
-    # TODO: This function will be called while a file was uploaded.
-    #  Not begin uploading, so the prompt won't appear immediately.
-    #  If upload failed, it will not be called.
+    # TODO: If upload failed, it will not be called. And will not show error
     if not status.is_completed:
         file_count = len(status.uploaded_files)
         if file_count < 1:
@@ -85,29 +103,23 @@ def handle_upload(status: du.UploadStatus) -> tuple[dbc.Alert | html.Div, dbc.Al
                 html.Ul([html.Li(fn) for fn in filenames])
             ]
 
-        status_display = dbc.Alert([
-            html.H3("Uploading..."),
-            html.Hr(),
-            html.Div(status_message)
-        ], color="info", dismissable=False)
+        status_display = __show_alert(title="Uploading...", msg=status_message, dismissable=False)
         return status_display, html.Div()
 
 
     filepath = [os.fspath(fp) for fp in status.uploaded_files]
     charts = init_graph(filepath_list=filepath)
     if not charts:
-        status_display = dbc.Alert([
-            html.H3("Oops! An unexpected error occurred"),
-            html.Hr(),
-            html.Div("Failed to generate Graphs.")
-        ], color="danger", dismissable=False)
+        status_display = __show_alert(
+            title="Oops! An unexpected error occurred", msg=["Failed to generate Graphs."],
+            color="danger", dismissable=False
+        )
         return status_display, html.Div()
 
-    status_display = dbc.Alert([
-        html.H3("Successful!"),
-        html.Hr(),
-        html.Div("The graphs were generated successfully below.")
-    ])
+    status_display = __show_alert(
+        title="Successful!", msg=["The graphs were generated successfully below."],
+        color="success", dismissable=True
+    )
     return status_display, charts
 
 
