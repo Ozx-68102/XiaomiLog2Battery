@@ -15,15 +15,32 @@ function WaitForElements(selectors, callback) {
     observer.observe(document.body, {childList: true, subtree: true});
 }
 
-WaitForElements(
-    ["#upload-component"],
-    (UploadComponent) => {
+const uploader = "upload-component";
+
+document.addEventListener("DOMContentLoaded", () => {
+    WaitForElements([`#${uploader}`], (UploadComponent) => {
+        // Set a callback on dash-uploader, it will be called by itself when fileError event occurred.
+        dash_clientside.set_props(uploader, {
+            onUploadErrorCallback: (file, _) => {
+                const filename = file.name;
+
+                dash_clientside.set_props("js-new-error-file", {
+                    data: {filename: filename}
+                });
+            }
+        });
+
         UploadComponent.addEventListener("change", () => {
             dash_clientside.set_props("js-update-prompt", {
                 data: {
-                    show: true, msg: "Now files are uploading. It may take some time, so hang tight..."
+                    show: true, title: "Uploading...",
+                    msg: "Now files are uploading. It may take some time, so hang tight...", color: "info",
+                    dismissable: false
                 }
             });
+            dash_clientside.set_props("js-error-file-empty-trigger", {
+                data: {status: true}
+            });
         });
-    }
-);
+    });
+});
