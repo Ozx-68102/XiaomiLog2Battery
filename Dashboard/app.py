@@ -15,10 +15,11 @@ app.config.suppress_callback_exceptions = True
 
 du.configure_upload(app=app, folder=INSTANCE_PATH)
 
-__FAILED_FILES_LIST = []    # A place storing whole error files list
+__UPLOAD_FAILED_FILES_LIST = []  # A place storing whole error files list
 
 app.layout = dbc.Container([
     # Those 3 stores will be modified by `upload-prompt.js` => js code
+    # It is all belongs to Upload procedure
     dcc.Store(
         id="js-update-prompt",
         data={
@@ -28,8 +29,9 @@ app.layout = dbc.Container([
     dcc.Store(id="js-new-error-file", data={"filename": None}),  # Get a new error file
     dcc.Store(id="js-error-file-empty-trigger", data={"status": None}),  # clear the FAILED_FILES_LIST
 
-    # if upload completed, it will determine whether to proceed to the next step
-    dcc.Store(id="upload-is-completed", data={"status": False, "all-failed": False}),
+    # if upload completed, it will determine whether to proceed to the next step (parse)
+    dcc.Store(id="is-upload-completed", data={"status": False, "filepath": [], "all-failed": False}),
+    dcc.Store(id="is-parse-begin", data={"status": False}),
 
     dbc.Row(
         dbc.Col(html.H1("Xiaomi Battery Log Analyzer", className="text-center my-4"), width=12)
@@ -66,6 +68,7 @@ app.layout = dbc.Container([
         className="mb-4"
     ),
     dbc.Row(html.Div(id="upload-status")),
+    dbc.Row(html.Div(id="parse-status")),
     dbc.Row(html.Div(id="output-container", style={"display": "flex", "flexDirection": "column", "gap": "10px"}))
 ], fluid=True, style={"padding": "15px"})
 
@@ -79,8 +82,8 @@ def empty_error_list(data: dict[str, bool | None]) -> NoUpdate:
     """
     Use a variable to clear the global variable **__FAILED_FILES_LIST**.
     """
-    global __FAILED_FILES_LIST
-    __FAILED_FILES_LIST = []
+    global __UPLOAD_FAILED_FILES_LIST
+    __UPLOAD_FAILED_FILES_LIST = []
 
     return no_update
 
@@ -93,14 +96,14 @@ def add_new_error_file(data: dict[str, str]) -> NoUpdate:
     """
     Use a callback to add the error file to a global variable **__FAILED_FILES_LIST**.
     """
-    global __FAILED_FILES_LIST
-    unique_list = set(__FAILED_FILES_LIST)
+    global __UPLOAD_FAILED_FILES_LIST
+    unique_list = set(__UPLOAD_FAILED_FILES_LIST)
 
     filename = data.get("filename", None)
     if filename and isinstance(filename, str):
         unique_list.add(filename)
 
-    __FAILED_FILES_LIST = list(unique_list)
+    __UPLOAD_FAILED_FILES_LIST = list(unique_list)
 
     return no_update
 
@@ -124,29 +127,51 @@ def render_upload_0t1_prompt(data: dict[str, str | bool]) -> dbc.Alert | html.Di
 @du.callback(
     output=[
         Output(component_id="upload-status", component_property="children"),
-        Output(component_id="upload-is-completed", component_property="data")
+        Output(component_id="is-upload-completed", component_property="data")
     ],
     id="upload-component"
 )
-def upload_handler(status: du.UploadStatus):
-    failed_files = __FAILED_FILES_LIST
+def upload_handler(status: du.UploadStatus) -> tuple[dbc.Alert, dict[str, bool | str]]:
+    filepaths = [os.fspath(fp) for fp in status.uploaded_files]
+    failed_files = __UPLOAD_FAILED_FILES_LIST
 
     if not status.is_completed:
-        status_message, color = upload_status_prompt(success=status.uploaded_files, failed=failed_files, complete=False)
+        status_message, color = upload_status_prompt(success=filepaths, failed=failed_files, complete=False)
         status_display = format_status_prompt(title="Uploading...", msg=status_message, color=color, dismissable=False)
 
-        return status_display, no_update
+        return status_display, {"status": False, "filepath": [], "all-failed": False}
 
-
-    status_message, color = upload_status_prompt(success=status.uploaded_files, failed=failed_files, complete=True)
+    status_message, color = upload_status_prompt(success=filepaths, failed=failed_files, complete=True)
     status_display = format_status_prompt(title="Upload Completed", msg=status_message, color=color, dismissable=True)
 
-    success_count = len(status.uploaded_files)
+    success_count = len(filepaths)
     failed_count = len(failed_files)
     all_failed = True if success_count < 1 and failed_count > 0 else False
-    dcc_store_data = {"status": True, "all-failed": all_failed}
+    dcc_store_data = {"status": True, "filepath": filepaths, "all-failed": all_failed}
 
     return status_display, dcc_store_data
+
+
+@app.callback(
+    [
+        Output(component_id="parse-status", component_property="children"),
+        Output(component_id="is-parse-begin", component_property="data")
+    ],
+    Input(component_id="is-upload-completed", component_property="data"),
+    prevent_initial_call=True
+)
+def begin_parse(data: dict[str, bool | list[str] | None]) -> tuple[html.Div | dbc.Alert, dict[str, bool]]:
+    status = data.get("status", False)
+    is_all_failed = data.get("all-failed", False)
+
+    if not status or is_all_failed:
+        return html.Div(), {"status": False}
+
+    message = [html.P("Preparing for parsing data. It may take some time.")]
+    status_display = format_status_prompt(title="Parsing Data", msg=message, color="info", dismissable=False)
+    is_parse_begin = {"status": True}
+
+    return status_display, is_parse_begin
 
 
 if __name__ == "__main__":

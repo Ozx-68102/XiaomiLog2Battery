@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 import dash_bootstrap_components as dbc
 from dash import html
@@ -7,13 +6,13 @@ from dash import html
 
 def format_status_prompt(title: str, msg: list, color: str = "info", dismissable: bool | None = None) -> dbc.Alert:
     return dbc.Alert([
-        html.H3(title),
+        html.H4(title),
         html.Hr(),
         html.Div(msg)
     ], color=color, dismissable=dismissable)
 
 
-def upload_status_prompt(success: list[Path], failed: list[str], complete: bool) -> tuple[list[html.P | html.Ul], str]:
+def upload_status_prompt(success: list[str], failed: list[str], complete: bool) -> tuple[list[html.P | html.Ul], str]:
     success_count = len(success)
     failed_count = len(failed)
 
@@ -34,7 +33,7 @@ def upload_status_prompt(success: list[Path], failed: list[str], complete: bool)
             html.Br(), html.Br()
         ])
 
-    filenames = [os.path.basename(os.fspath(filepath)) for filepath in success]
+    filenames = [os.path.basename(filepath) for filepath in success]
     if success_count > 0:
         success_file_text = "1 file was" if success_count == 1 else f"{success_count} files were"
         status.extend([
