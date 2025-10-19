@@ -6,9 +6,9 @@ from dash import html
 
 def format_status_prompt(title: str, msg: list, color: str = "info", dismissable: bool | None = None) -> dbc.Alert:
     return dbc.Alert([
-        html.H4(title),
-        html.Hr(),
-        html.Div(msg)
+        dbc.Row(html.H4(title)),
+        dbc.Row(html.Hr()),
+        dbc.Row(html.Div(msg))
     ], color=color, dismissable=dismissable)
 
 

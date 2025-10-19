@@ -3,8 +3,9 @@ import os
 import dash
 import dash_bootstrap_components as dbc
 import dash_uploader as du
-from dash import dcc, html, Output, Input, no_update, NoUpdate
+from dash import dcc, html, Output, Input, State, no_update, NoUpdate
 
+from Modules.Core import parse_files
 from Modules.FileProcess import INSTANCE_PATH
 from .utils import format_status_prompt, upload_status_prompt
 
@@ -22,9 +23,7 @@ app.layout = dbc.Container([
     # It is all belongs to Upload procedure
     dcc.Store(
         id="js-update-prompt",
-        data={
-            "show": False, "title": None, "msg": None, "color": "info", "dismissable": None
-        }
+        data={"show": False, "title": None, "msg": None, "color": "info", "dismissable": None}
     ),
     dcc.Store(id="js-new-error-file", data={"filename": None}),  # Get a new error file
     dcc.Store(id="js-error-file-empty-trigger", data={"status": None}),  # clear the FAILED_FILES_LIST
@@ -32,6 +31,7 @@ app.layout = dbc.Container([
     # if upload completed, it will determine whether to proceed to the next step (parse)
     dcc.Store(id="is-upload-completed", data={"status": False, "filepath": [], "all-failed": False}),
     dcc.Store(id="is-parse-begin", data={"status": False}),
+    dcc.Store(id="parsed-data", data={"value": []}),
 
     dbc.Row(
         dbc.Col(html.H1("Xiaomi Battery Log Analyzer", className="text-center my-4"), width=12)
@@ -48,8 +48,8 @@ app.layout = dbc.Container([
                 dbc.CardBody([
                     du.Upload(  # `filetypes` parameter does not work anymore
                         id="upload-component",
-                        text="Drag files to here, or click it to select file(s). After that file(s) will be automatically uploaded. No more than 40 files.",
-                        max_files=40,
+                        text="Drag files to here, or click it to select file(s). After that file(s) will be automatically uploaded. No more than 10 files.",
+                        max_files=10,
                         upload_id="upload",
                         default_style={
                             "width": "100%",
@@ -154,25 +154,52 @@ def upload_handler(status: du.UploadStatus) -> tuple[dbc.Alert, dict[str, bool |
 
 @app.callback(
     [
-        Output(component_id="parse-status", component_property="children"),
+        Output(component_id="parse-status", component_property="children", allow_duplicate=True),
         Output(component_id="is-parse-begin", component_property="data")
     ],
     Input(component_id="is-upload-completed", component_property="data"),
     prevent_initial_call=True
 )
-def begin_parse(data: dict[str, bool | list[str] | None]) -> tuple[html.Div | dbc.Alert, dict[str, bool]]:
+def begin_parse(data: dict[str, bool | list[str]]) -> tuple[html.Div | dbc.Alert, dict[str, bool]]:
     status = data.get("status", False)
+    total_files = len(data.get("filepath", []))
     is_all_failed = data.get("all-failed", False)
 
     if not status or is_all_failed:
         return html.Div(), {"status": False}
 
-    message = [html.P("Preparing for parsing data. It may take some time.")]
+    message = [html.P(f"Preparing for parsing data (Total: {total_files}). It may take some time. Hang tight...")]
     status_display = format_status_prompt(title="Parsing Data", msg=message, color="info", dismissable=False)
     is_parse_begin = {"status": True}
 
     return status_display, is_parse_begin
 
+
+@app.callback(
+    [
+        Output(component_id="parse-status", component_property="children"),
+        Output(component_id="parsed-data", component_property="data")
+    ],
+    Input(component_id="is-parse-begin", component_property="data"),
+    State(component_id="is-upload-completed", component_property="data")
+)
+def parse_handler(parse_data: dict[str, bool], upload_info: dict[str, bool | list[str]]) -> tuple[
+    html.Div | dbc.Alert, dict[str, list[dict[str, str | int]]]]:
+    status = parse_data.get("status", False)
+    upload_status = upload_info.get("status", False)
+
+    if not status or not upload_status:
+        return html.Div(), {"value": []}
+
+    filepath: list[str] = upload_info.get("filepath", [])
+    if not filepath:
+        return html.Div(), {"value": []}
+
+    parsed_data = parse_files(filepath_list=filepath)
+
+    message = [html.P(f"Successfully parsed {len(parsed_data)} file(s).")]
+    status_display = format_status_prompt(title="Parse Successful", msg=message, color="success", dismissable=True)
+    return status_display, {"value": parsed_data}
 
 if __name__ == "__main__":
     pass
