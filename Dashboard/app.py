@@ -5,7 +5,6 @@ import dash_bootstrap_components as dbc
 import dash_uploader as du
 from dash import dcc, html, Output, Input, no_update, NoUpdate
 
-from Modules.Core import init_graph
 from Modules.FileProcess import INSTANCE_PATH
 from .utils import format_status_prompt, upload_status_prompt
 
@@ -16,7 +15,7 @@ app.config.suppress_callback_exceptions = True
 
 du.configure_upload(app=app, folder=INSTANCE_PATH)
 
-__FAILED_FILES_LIST = []
+__FAILED_FILES_LIST = []    # A place storing whole error files list
 
 app.layout = dbc.Container([
     # Those 3 stores will be modified by `upload-prompt.js` => js code
@@ -28,6 +27,10 @@ app.layout = dbc.Container([
     ),
     dcc.Store(id="js-new-error-file", data={"filename": None}),  # Get a new error file
     dcc.Store(id="js-error-file-empty-trigger", data={"status": None}),  # clear the FAILED_FILES_LIST
+
+    # if upload completed, it will determine whether to proceed to the next step
+    dcc.Store(id="upload-is-completed", data={"status": False, "all-failed": False}),
+
     dbc.Row(
         dbc.Col(html.H1("Xiaomi Battery Log Analyzer", className="text-center my-4"), width=12)
     ),
@@ -109,7 +112,7 @@ def add_new_error_file(data: dict[str, str]) -> NoUpdate:
 )
 def render_upload_0t1_prompt(data: dict[str, str | bool]) -> dbc.Alert | html.Div:
     """
-    Render a prompt when upload beginning, operate by customized js file automatically.
+    Render a prompt when upload beginning, its message was operated by customized js file.
     """
     keywords = ["title", "msg", "color"]
     if data.get("show") and any((data.get(keyword) is not None) for keyword in keywords):
@@ -121,34 +124,29 @@ def render_upload_0t1_prompt(data: dict[str, str | bool]) -> dbc.Alert | html.Di
 @du.callback(
     output=[
         Output(component_id="upload-status", component_property="children"),
-        Output(component_id="output-container", component_property="children")
+        Output(component_id="upload-is-completed", component_property="data")
     ],
     id="upload-component"
 )
-def handle_upload(status: du.UploadStatus) -> tuple[dbc.Alert | html.Div, dbc.Alert | html.Div]:
+def upload_handler(status: du.UploadStatus):
+    failed_files = __FAILED_FILES_LIST
+
     if not status.is_completed:
-        failed_files = __FAILED_FILES_LIST
-        status_message, color = upload_status_prompt(success=status.uploaded_files, failed=failed_files)
+        status_message, color = upload_status_prompt(success=status.uploaded_files, failed=failed_files, complete=False)
         status_display = format_status_prompt(title="Uploading...", msg=status_message, color=color, dismissable=False)
-        return status_display, html.Div()
 
-    filepath = [os.fspath(fp) for fp in status.uploaded_files]
+        return status_display, no_update
 
-    charts, num = init_graph(filepath_list=filepath)
-    if not charts:
-        status_display = format_status_prompt(
-            title="Oops! An unexpected error occurred", msg=["Failed to generate Graphs."],
-            color="danger", dismissable=False
-        )
-        return status_display, html.Div()
 
-    msg_prefix = "The graph was" if num == 1 else "The graphs were"
+    status_message, color = upload_status_prompt(success=status.uploaded_files, failed=failed_files, complete=True)
+    status_display = format_status_prompt(title="Upload Completed", msg=status_message, color=color, dismissable=True)
 
-    status_display = format_status_prompt(
-        title="Successful!", msg=[f"{msg_prefix} generated successfully below."],
-        color="success", dismissable=True
-    )
-    return status_display, charts
+    success_count = len(status.uploaded_files)
+    failed_count = len(failed_files)
+    all_failed = True if success_count < 1 and failed_count > 0 else False
+    dcc_store_data = {"status": True, "all-failed": all_failed}
+
+    return status_display, dcc_store_data
 
 
 if __name__ == "__main__":

@@ -13,14 +13,18 @@ def format_status_prompt(title: str, msg: list, color: str = "info", dismissable
     ], color=color, dismissable=dismissable)
 
 
-def upload_status_prompt(success: list[Path], failed: list[str]) -> tuple[list[html.P | html.Ul], str]:
+def upload_status_prompt(success: list[Path], failed: list[str], complete: bool) -> tuple[list[html.P | html.Ul], str]:
     success_count = len(success)
     failed_count = len(failed)
 
     if success_count < 1 and failed_count < 1:
-        return [html.P("Now files are uploading, it may take some time, so hang tight.")], "info"
+        if not complete:
+            return [html.P("Now files are uploading, it may take some time, so hang tight.")], "info"
 
-    status = [html.P("Files still uploading...")]
+        # maybe it will not reach here but just in case
+        return [html.P("An unexpected error occurred.")], "danger"
+
+    status = [html.P("Files still uploading...")] if not complete else []
     if failed_count > 0:
         failed_file_text = "was 1 file" if failed_count == 1 else f"were {failed_count} files"
         status.extend([
@@ -38,5 +42,10 @@ def upload_status_prompt(success: list[Path], failed: list[str]) -> tuple[list[h
             html.Ul([html.Li(f) for f in filenames])
         ])
 
-    color = "warning" if failed_count > 0 else "info"
-    return status, color
+    if complete:
+        if success_count > 0:
+            return status, "success" if failed_count < 1 else "warning"
+
+        return status, "danger"
+
+    return status, "info" if failed_count < 1 else "warning"
