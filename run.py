@@ -1,7 +1,7 @@
 import webbrowser
 from threading import Timer
 
-from Dashboard.app import app
+from Dashboard import app
 
 
 def open_browser() -> None:

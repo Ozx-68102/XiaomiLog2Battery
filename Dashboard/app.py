@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 import dash
 import dash_bootstrap_components as dbc
@@ -8,6 +7,7 @@ from dash import dcc, html, Output, Input, no_update, NoUpdate
 
 from Modules.Core import init_graph
 from Modules.FileProcess import INSTANCE_PATH
+from .utils import format_status_prompt, upload_status_prompt
 
 basepath = os.path.dirname(os.path.abspath(__file__))
 
@@ -19,7 +19,7 @@ du.configure_upload(app=app, folder=INSTANCE_PATH)
 __FAILED_FILES_LIST = []
 
 app.layout = dbc.Container([
-    # Those stores will be modified by `upload-prompt.js` => js code
+    # Those 3 stores will be modified by `upload-prompt.js` => js code
     dcc.Store(
         id="js-update-prompt",
         data={
@@ -62,45 +62,9 @@ app.layout = dbc.Container([
         ], width=12),
         className="mb-4"
     ),
-    dbc.Row(html.Div(id="status-container")),
+    dbc.Row(html.Div(id="upload-status")),
     dbc.Row(html.Div(id="output-container", style={"display": "flex", "flexDirection": "column", "gap": "10px"}))
 ], fluid=True, style={"padding": "15px"})
-
-def __show_alert(title: str, msg: list, color: str = "info", dismissable: bool | None = None) -> dbc.Alert:
-    return dbc.Alert([
-        html.H3(title),
-        html.Hr(),
-        html.Div(msg)
-    ], color=color, dismissable=dismissable)
-
-
-def __upload_status_handler(success: list[Path], failed: list[str]) -> tuple[list[html.P | html.Ul], str]:
-    success_count = len(success)
-    failed_count = len(failed)
-
-    if success_count < 1 and failed_count < 1:
-        return [html.P("Now files are uploading, it may take some time, so hang tight.")], "info"
-
-    status = [html.P("Files still uploading...")]
-    if failed_count > 0:
-        failed_file_text = "was 1 file" if failed_count == 1 else f"were {failed_count} files"
-        status.extend([
-            html.H5("Please note:"),
-            html.P(f"There {failed_file_text} that failed to upload:"),
-            html.Ul([html.Li(f) for f in failed]),
-            html.Br(), html.Br()
-        ])
-
-    filenames = [os.path.basename(os.fspath(filepath)) for filepath in success]
-    if success_count > 0:
-        success_file_text = "1 file was" if success_count == 1 else f"{success_count} files were"
-        status.extend([
-            html.P(f"System detected that {success_file_text} uploaded successfully:"),
-            html.Ul([html.Li(f) for f in filenames])
-        ])
-
-    color = "warning" if failed_count > 0 else "info"
-    return status, color
 
 
 @app.callback(
@@ -139,7 +103,7 @@ def add_new_error_file(data: dict[str, str]) -> NoUpdate:
 
 
 @app.callback(
-    Output(component_id="status-container", component_property="children", allow_duplicate=True),
+    Output(component_id="upload-status", component_property="children", allow_duplicate=True),
     Input(component_id="js-update-prompt", component_property="data"),
     prevent_initial_call=True
 )
@@ -149,14 +113,14 @@ def render_upload_0t1_prompt(data: dict[str, str | bool]) -> dbc.Alert | html.Di
     """
     keywords = ["title", "msg", "color"]
     if data.get("show") and any((data.get(keyword) is not None) for keyword in keywords):
-        return __show_alert(title=data.get("title"), msg=[data.get("msg")], color=data.get("color"))
+        return format_status_prompt(title=data.get("title"), msg=[data.get("msg")], color=data.get("color"))
 
     return html.Div()
 
 
 @du.callback(
     output=[
-        Output(component_id="status-container", component_property="children"),
+        Output(component_id="upload-status", component_property="children"),
         Output(component_id="output-container", component_property="children")
     ],
     id="upload-component"
@@ -164,14 +128,15 @@ def render_upload_0t1_prompt(data: dict[str, str | bool]) -> dbc.Alert | html.Di
 def handle_upload(status: du.UploadStatus) -> tuple[dbc.Alert | html.Div, dbc.Alert | html.Div]:
     if not status.is_completed:
         failed_files = __FAILED_FILES_LIST
-        status_message, color = __upload_status_handler(success=status.uploaded_files, failed=failed_files)
-        status_display = __show_alert(title="Uploading...", msg=status_message, color=color, dismissable=False)
+        status_message, color = upload_status_prompt(success=status.uploaded_files, failed=failed_files)
+        status_display = format_status_prompt(title="Uploading...", msg=status_message, color=color, dismissable=False)
         return status_display, html.Div()
 
     filepath = [os.fspath(fp) for fp in status.uploaded_files]
+
     charts, num = init_graph(filepath_list=filepath)
     if not charts:
-        status_display = __show_alert(
+        status_display = format_status_prompt(
             title="Oops! An unexpected error occurred", msg=["Failed to generate Graphs."],
             color="danger", dismissable=False
         )
@@ -179,7 +144,7 @@ def handle_upload(status: du.UploadStatus) -> tuple[dbc.Alert | html.Div, dbc.Al
 
     msg_prefix = "The graph was" if num == 1 else "The graphs were"
 
-    status_display = __show_alert(
+    status_display = format_status_prompt(
         title="Successful!", msg=[f"{msg_prefix} generated successfully below."],
         color="success", dismissable=True
     )

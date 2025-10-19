@@ -1,2 +1,2 @@
-from Modules.FileProcess.BatteryLogProcessor import BatteryLogProcessor
-from Modules.FileProcess.FolderOperator import FolderOperator, INSTANCE_PATH
+from .BatteryLogProcessor import BatteryLogProcessor
+from .FolderOperator import FolderOperator, INSTANCE_PATH

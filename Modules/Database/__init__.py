@@ -1,1 +1,1 @@
-from Modules.Database.database import init_table_ar, save_data_iar, get_all_results_far, get_results_by_time_range_far, TABLE_AR_FIELDS
+from .database import init_table_ar, save_data_iar, get_all_results_far, get_results_by_time_range_far, TABLE_AR_FIELDS
