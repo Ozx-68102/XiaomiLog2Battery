@@ -19,7 +19,7 @@ du.configure_upload(app=app, folder=INSTANCE_PATH)
 __FAILED_FILES_LIST = []
 
 app.layout = dbc.Container([
-    # Those stores will be modified by `upload-init-prompt.js` => js code
+    # Those stores will be modified by `upload-prompt.js` => js code
     dcc.Store(
         id="js-update-prompt",
         data={

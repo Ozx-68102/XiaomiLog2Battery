@@ -1,7 +1,7 @@
 /**
  * Wait for React Elements loaded.
  * @param {string[]} selectors
- * @param {callback} callback
+ * @param {(...elements: HTMLElement[]) => void} callback
  */
 function WaitForElements(selectors, callback) {
     const observer = new MutationObserver((mutations) => {
