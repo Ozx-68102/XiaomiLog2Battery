@@ -37,7 +37,7 @@ class BatteryLogProcessor:
         :return: A string containing the Xiaomi log filepath.
         """
         if not os.path.isfile(fp) or not os.path.isdir(os.path.dirname(fp)):
-            raise ValueError(f"'{fp}' is not a valid file path.")
+            raise ValueError(f"Variable '{fp}' is not a valid file path.")
 
         filename = os.path.basename(fp)
         if not filename.startswith("bugreport") or not filename.endswith(".zip"):

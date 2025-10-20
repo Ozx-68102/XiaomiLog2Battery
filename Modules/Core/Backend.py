@@ -16,3 +16,10 @@ def parse_files(filepath_list: list[str]) -> list[dict[str, str | int]]:
     battery_info = _info_parser.parse_battery_info(tps=txt_list)
     print(f"Done with {len(battery_info)} battery info.")
     return battery_info
+
+
+def store_data(data: list[dict[str, str | int]]) -> bool:
+    print(f"Start to store {len(data)} data into database.")
+    status = _data_service.init_battery_data(data=data)
+    print(f"Result: {status}")
+    return status

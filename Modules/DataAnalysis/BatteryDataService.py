@@ -27,7 +27,7 @@ class BatteryDataService:
         return True
 
     @staticmethod
-    def initialize_battery_data_table():
+    def initialize_battery_data_table() -> None:
         init_table_ar()
 
     def init_battery_data(self, data: dict[str, str | int] | list[dict[str, str | int]]) -> bool:

@@ -18,7 +18,7 @@ def upload_status_prompt(success: list[str], failed: list[str], complete: bool) 
 
     if success_count < 1 and failed_count < 1:
         if not complete:
-            return [html.P("Now files are uploading, it may take some time, so hang tight.")], "info"
+            return [html.P("Now files are uploading, it may take some time. Hang tight...")], "info"
 
         # maybe it will not reach here but just in case
         return [html.P("An unexpected error occurred.")], "danger"

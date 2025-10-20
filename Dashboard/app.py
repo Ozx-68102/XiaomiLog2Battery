@@ -5,7 +5,7 @@ import dash_bootstrap_components as dbc
 import dash_uploader as du
 from dash import dcc, html, Output, Input, State, no_update, NoUpdate
 
-from Modules.Core import parse_files
+from Modules.Core import parse_files, store_data
 from Modules.FileProcess import INSTANCE_PATH
 from .utils import format_status_prompt, upload_status_prompt
 
@@ -31,7 +31,9 @@ app.layout = dbc.Container([
     # if upload completed, it will determine whether to proceed to the next step (parse)
     dcc.Store(id="is-upload-completed", data={"status": False, "filepath": [], "all-failed": False}),
     dcc.Store(id="is-parse-begin", data={"status": False}),
-    dcc.Store(id="parsed-data", data={"value": []}),
+
+    # make sure that parsed-data is not empty
+    dcc.Store(id="parsed-data", data={"status": False, "value": []}),
 
     dbc.Row(
         dbc.Col(html.H1("Xiaomi Battery Log Analyzer", className="text-center my-4"), width=12)
@@ -176,30 +178,45 @@ def begin_parse(data: dict[str, bool | list[str]]) -> tuple[html.Div | dbc.Alert
 
 
 @app.callback(
-    [
-        Output(component_id="parse-status", component_property="children"),
-        Output(component_id="parsed-data", component_property="data")
-    ],
+    Output(component_id="parsed-data", component_property="data"),
     Input(component_id="is-parse-begin", component_property="data"),
     State(component_id="is-upload-completed", component_property="data")
 )
-def parse_handler(parse_data: dict[str, bool], upload_info: dict[str, bool | list[str]]) -> tuple[
-    html.Div | dbc.Alert, dict[str, list[dict[str, str | int]]]]:
+def parse_handler(
+        parse_data: dict[str, bool], upload_info: dict[str, bool | list[str]]
+) -> dict[str, bool | list[dict[str, str | int]]]:
     status = parse_data.get("status", False)
     upload_status = upload_info.get("status", False)
 
     if not status or not upload_status:
-        return html.Div(), {"value": []}
+        return {"status": False, "value": []}
 
     filepath: list[str] = upload_info.get("filepath", [])
-    if not filepath:
-        return html.Div(), {"value": []}
-
     parsed_data = parse_files(filepath_list=filepath)
 
-    message = [html.P(f"Successfully parsed {len(parsed_data)} file(s).")]
-    status_display = format_status_prompt(title="Parse Successful", msg=message, color="success", dismissable=True)
-    return status_display, {"value": parsed_data}
+    return {"status": True, "value": parsed_data}
+
+
+@app.callback(
+    Output(component_id="parse-status", component_property="children"),
+    Input(component_id="parsed-data", component_property="data")
+)
+def store_handler(data: dict[str, bool | list[dict[str, str | int]]]):
+    status = data.get("status", False)
+
+    if not status:
+        return no_update
+
+    parsed_data: list[dict[str, str | int]] = data.get("value", [])
+    result = store_data(data=parsed_data)
+    if not result:
+        return html.Div()   # TODO: Failed prompt
+
+    message = [html.P(f"The data was been parsed successfully.")]
+    status_display = format_status_prompt(title="Parse Completed", msg=message, color="success", dismissable=True)
+
+    return status_display
+
 
 if __name__ == "__main__":
     pass
