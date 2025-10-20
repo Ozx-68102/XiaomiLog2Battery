@@ -1,3 +1,5 @@
+from dash import html, dcc
+
 from Modules.DataAnalysis import BatteryInfoParser, BatteryDataService, PlotlyVisualizer
 from Modules.FileProcess import BatteryLogProcessor
 
@@ -23,3 +25,25 @@ def store_data(data: list[dict[str, str | int]]) -> bool:
     status = _data_service.init_battery_data(data=data)
     print(f"Result: {status}")
     return status
+
+
+def viz_battery_data() -> tuple[html.Div | None, int]:
+    print("Start to visualize battery data.")
+    battery_data = _data_service.get_all_battery_data()
+    if not battery_data:
+        print("No battery data found in database.")
+        return None, 0
+
+
+    changing_chart = dcc.Graph(figure=_visualizer.gen_battery_changing_chart(data=battery_data))
+    graph_count = 1
+
+    try:
+        health_chart = dcc.Graph(figure=_visualizer.gen_battery_health_chart(data=battery_data))
+        graph_count += 1
+    except ValueError:
+        print("Your modal is not supported for health chart.")
+        health_chart = html.Div()
+
+    print(f"Done with visualizing {graph_count} graph(s).")
+    return html.Div([changing_chart, health_chart], style={"display": "flex"}), graph_count

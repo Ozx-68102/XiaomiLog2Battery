@@ -5,7 +5,7 @@ import dash_bootstrap_components as dbc
 import dash_uploader as du
 from dash import dcc, html, Output, Input, State, no_update, NoUpdate
 
-from Modules.Core import parse_files, store_data
+from Modules.Core import parse_files, store_data, viz_battery_data
 from Modules.FileProcess import INSTANCE_PATH
 from .utils import format_status_prompt, upload_status_prompt
 
@@ -34,6 +34,7 @@ app.layout = dbc.Container([
 
     # make sure that parsed-data is not empty
     dcc.Store(id="parsed-data", data={"status": False, "value": []}),
+    dcc.Store(id="visualization-trigger", data={"status": False}),
 
     dbc.Row(
         dbc.Col(html.H1("Xiaomi Battery Log Analyzer", className="text-center my-4"), width=12)
@@ -71,6 +72,7 @@ app.layout = dbc.Container([
     ),
     dbc.Row(html.Div(id="upload-status")),
     dbc.Row(html.Div(id="parse-status")),
+    dbc.Row(html.Div(id="viz-status")),
     dbc.Row(html.Div(id="output-container", style={"display": "flex", "flexDirection": "column", "gap": "10px"}))
 ], fluid=True, style={"padding": "15px"})
 
@@ -198,24 +200,53 @@ def parse_handler(
 
 
 @app.callback(
-    Output(component_id="parse-status", component_property="children"),
+    [
+        Output(component_id="parse-status", component_property="children"),
+        Output(component_id="visualization-trigger", component_property="data")
+    ],
     Input(component_id="parsed-data", component_property="data")
 )
-def store_handler(data: dict[str, bool | list[dict[str, str | int]]]):
+def store_handler(
+        data: dict[str, bool | list[dict[str, str | int]]]
+) -> tuple[dbc.Alert | html.Div | NoUpdate, dict[str, bool]]:
     status = data.get("status", False)
 
     if not status:
-        return no_update
+        return no_update, {"status": False}
 
     parsed_data: list[dict[str, str | int]] = data.get("value", [])
     result = store_data(data=parsed_data)
     if not result:
-        return html.Div()   # TODO: Failed prompt
+        return html.Div(), {"status": False}   # TODO: Failed prompt
 
     message = [html.P(f"The data was been parsed successfully.")]
     status_display = format_status_prompt(title="Parse Completed", msg=message, color="success", dismissable=True)
 
-    return status_display
+    return status_display, {"status": True}
+
+
+@app.callback(
+    [
+        Output(component_id="viz-status", component_property="children"),
+        Output(component_id="output-container", component_property="children")
+    ],
+    Input(component_id="visualization-trigger", component_property="data")
+)
+def viz_handler(trigger: dict[str, bool]) -> tuple[dbc.Alert | html.Div | NoUpdate, html.Div]:
+    status = trigger.get("status", False)
+
+    if not status:
+        return no_update, html.Div()
+
+    graph, num = viz_battery_data()
+    if not graph:
+        return html.Div(), html.Div()   # TODO: Failed prompt
+
+    msg_prefix = f"{num} graph was" if num < 2 else f"{num} graphs were"
+    message = [html.P(f"{msg_prefix} generated successfully.")]
+    status_display = format_status_prompt(title="Graph Generated", msg=message, color="success", dismissable=True)
+
+    return status_display, graph
 
 
 if __name__ == "__main__":

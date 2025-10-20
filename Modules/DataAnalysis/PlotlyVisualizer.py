@@ -79,18 +79,19 @@ class PlotlyVisualizer:
                     ),
                     row=1, col=1
                 )
-            else:
-                fig.add_trace(
-                    go.Scatter(
-                        x=df["log_capture_time"],
-                        y=df[field],
-                        name=field,
-                        mode="lines",
-                        line={"width": 2, "shape": "spline"},
-                        showlegend=True
-                    ),
-                    row=1, col=1
-                )
+                continue
+
+            fig.add_trace(
+                go.Scatter(
+                    x=df["log_capture_time"],
+                    y=df[field],
+                    name=field,
+                    mode="lines",
+                    line={"width": 2, "shape": "spline"},
+                    showlegend=True
+                ),
+                row=1, col=1
+            )
 
         fig.add_trace(
             go.Scatter(
