@@ -33,7 +33,7 @@ Debugging Suggestion: It is recommended to open the project with `PyCharm 2024.1
 1. **Web 交互与界面模块（Dashboard）**
    - 基于 `Dash` 框架构建本地 Web 面板，实现页面布局、组件渲染与交互逻辑（如文件上传触发图表更新）；
    - 使用 `dash-bootstrap-components` 优化 UI 结构（容器、卡片、行布局等），提升界面规整性；
-   - 集成自定义 `dash-uploader==0.7.0a2+fix1` 组件（本地 whl 安装），支持多文件拖拽上传，简化用户操作；
+   - 集成自定义 `dash-uploader` 组件（本地 whl 安装，基于已归档项目的**自定义 Fork 版本（由本人维护）**：[dash-uploader](https://github.com/Ozx-68102/dash-uploader)），支持多文件拖拽上传，简化用户操作；
    - 通过 `threading.Timer` 实现服务启动后自动打开浏览器，优化用户体验；
    - 支持两种操作模式：初始化模式（重建数据库）和追加模式（向现有数据库添加数据）。
 
@@ -61,7 +61,7 @@ Debugging Suggestion: It is recommended to open the project with `PyCharm 2024.1
 
 5. **依赖管理工具**
    - 基于 `sys` 与 `subprocess` 实现 `PackageCheckers.py`，自动检测第三方库安装状态，缺失时自动执行安装；
-   - 支持从本地 whl 文件安装自定义库（如 `dash-uploader==0.7.0a2+fix1`），确保依赖一致性和部署可靠性；
+   - 支持从本地 whl 文件安装自定义库，确保依赖一致性和部署可靠性；
    - 对特定版本依赖进行版本校验，确保环境一致性。
 
 6. **跨平台适配**
@@ -74,7 +74,7 @@ Debugging Suggestion: It is recommended to open the project with `PyCharm 2024.1
 1. **Web Interaction & Interface Module (Dashboard)**
    - Builds a local Web panel based on the `Dash` framework, enabling page layout, component rendering, and interaction logic (e.g., chart updates triggered by file uploads);
    - Uses `dash-bootstrap-components` to optimize UI structure (containers, cards, row layouts, etc.) for better regularity;
-   - Integrates custom `dash-uploader==0.7.0a2+fix1` component (local whl installation) to support drag-and-drop upload of multiple files, simplifying user operations;
+   - Integrates custom `dash-uploader` component (local whl installation, based on **my own maintained Fork** of the archived project: [dash-uploader](https://github.com/Ozx-68102/dash-uploader)) to support drag-and-drop upload of multiple files, simplifying user operations;
    - Implements automatic browser opening after service startup via `threading.Timer` to enhance user experience;
    - Supports two operation modes: Initialization mode (rebuild database) and Append mode (add data to existing database).
 
@@ -102,7 +102,7 @@ Debugging Suggestion: It is recommended to open the project with `PyCharm 2024.1
 
 5. **Dependency Management Tool**
    - Implements `PackageCheckers.py` based on `sys` and `subprocess` to automatically detect the installation status of third-party libraries and execute installation if missing;
-   - Supports installing custom libraries from local whl files (e.g., `dash-uploader==0.7.0a2+fix1`), ensuring dependency consistency and deployment reliability;
+   - Supports installing custom libraries from local whl files, ensuring dependency consistency and deployment reliability;
    - Performs version verification for specific dependencies to ensure environment consistency.
 
 6. **Cross-Platform Adaptation**
