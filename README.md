@@ -33,7 +33,7 @@ Debugging Suggestion: It is recommended to open the project with `PyCharm 2024.1
 1. **Web 交互与界面模块（Dashboard）**
    - 基于 `Dash` 框架构建本地 Web 面板，实现页面布局、组件渲染与交互逻辑（如文件上传触发图表更新）；
    - 使用 `dash-bootstrap-components` 优化 UI 结构（容器、卡片、行布局等），提升界面规整性；
-   - 集成自定义 `dash-uploader` 组件（本地 whl 安装，基于已归档项目的**自定义 Fork 版本（由本人维护）**：[dash-uploader](https://github.com/Ozx-68102/dash-uploader)），支持多文件拖拽上传，简化用户操作；
+   - 集成自定义 `dash-uploader` 组件【本地 whl 安装，基于已归档项目的**自定义 Fork 版本（由本人维护）**：[dash-uploader](https://github.com/Ozx-68102/dash-uploader)】，支持多文件拖拽上传，简化用户操作；
    - 通过 `threading.Timer` 实现服务启动后自动打开浏览器，优化用户体验；
    - 支持两种操作模式：初始化模式（重建数据库）和追加模式（向现有数据库添加数据）。
 
