@@ -20,9 +20,18 @@ def parse_files(filepath_list: list[str]) -> list[dict[str, str | int]]:
     return battery_info
 
 
-def store_data(data: list[dict[str, str | int]]) -> bool:
-    print(f"Start to store {len(data)} data into database.")
-    status = _data_service.init_battery_data(data=data)
+def store_data(data: list[dict[str, str | int]], mode: str = "init") -> bool:
+    print(f"Start to store {len(data)} data into database with mode: {mode}.")
+    
+    if mode == "add":
+        # Append data to existing table
+        print("Appending new data to existing records...")
+        status = _data_service.append_battery_data(data=data)
+    else:
+        # Initialize table and store data
+        print("Initializing table and storing data...")
+        status = _data_service.init_battery_data(data=data)
+    
     print(f"Result: {status}")
     return status
 

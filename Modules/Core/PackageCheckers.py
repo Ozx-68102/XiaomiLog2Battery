@@ -1,3 +1,4 @@
+import os
 import subprocess
 import sys
 
@@ -9,7 +10,8 @@ def get_package_version(package: str) -> str | bool:
     :return: Installed => str, Cannot find version => True, Not installed => False
     """
     try:
-        result = subprocess.run(args=[sys.executable, "-m", "pip", "show", package], capture_output=True, text=True, check=True)
+        result = subprocess.run(args=[sys.executable, "-m", "pip", "show", package], capture_output=True, text=True,
+                                check=True)
         for line in result.stdout.split("\n"):
             if line.startswith("Version"):
                 return line.split(":")[1].strip()
@@ -19,18 +21,30 @@ def get_package_version(package: str) -> str | bool:
         return False
 
 
-def install_package(package: str, version: str | None = None) -> None:
-    name = f"{package}=={version}" if version else package
-    args = [sys.executable, "-m", "pip", "install", name]
+def install_package(package: str, version: str | None = None, local_path: str | None = None) -> None:
+    # Modified to support local installation
+    if local_path:
+        # Use --force-reinstall to ensure the local version overwrites any existing one
+        args = [sys.executable, "-m", "pip", "install", local_path, "--force-reinstall"]
+    else:
+        name = f"{package}=={version}" if version else package
+        args = [sys.executable, "-m", "pip", "install", name]
+
     subprocess.check_call(args=args)
 
 
 def check_and_install_packages() -> None:
+    # Calculate the path to the libs folder
+    # Structure: Root/Modules/Core/PackageCheckers.py -> Need to go up 3 levels
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    whl_path = os.path.join(base_dir, "libs", "dash_uploader-0.7.0a2+fix1-py3-none-any.whl")
+
     required_packages = {
         "pandas": None,
         "plotly": None,
         "dash": None,
-        "dash-uploader": "0.7.0a2",
+        # Use a tuple or dict to specify version and local path
+        "dash-uploader": {"ver": "0.7.0a2+fix1", "path": whl_path},
         "dash-bootstrap-components": None
     }
 
@@ -38,7 +52,16 @@ def check_and_install_packages() -> None:
     success = 0
     failed = 0
 
-    for required_package, specified_version in required_packages.items():
+    for required_package, spec in required_packages.items():
+        # Parse version and path from spec
+        local_path = None
+
+        if isinstance(spec, dict):
+            specified_version = spec.get("ver")
+            local_path = spec.get("path")
+        else:
+            specified_version = spec
+
         try:
             if not specified_version:
                 status = get_package_version(required_package)
@@ -62,8 +85,9 @@ def check_and_install_packages() -> None:
 
             # Version incorrect
             if version != specified_version:
-                print(f"{counts + 1}. {required_package} version incorrect or not installed. So installation will begin soon...")
-                install_package(required_package, specified_version)
+                print(
+                    f"{counts + 1}. {required_package} version incorrect or not installed. So installation will begin soon...")
+                install_package(required_package, specified_version, local_path)  # Pass local_path
                 counts += 1
                 success += 1
                 continue

@@ -60,7 +60,10 @@ class PlotlyVisualizer:
         df = self._preprocess_data(data)
         model = df.loc[:, "nickname"].iloc[0]
 
-        df["avg_battery_capacity"] = df[self.capacity_fields].mean(axis=1)
+        # Calculate the overall average battery capacity across all data points
+        overall_avg_capacity = df[self.capacity_fields].mean().mean()
+        # Create a column with the same constant value for all rows
+        df["avg_battery_capacity"] = overall_avg_capacity
 
         fig = make_subplots(rows=1, cols=1, subplot_titles=[f"Battery Capacities of {model} Over Time"],
                             vertical_spacing=0.15)

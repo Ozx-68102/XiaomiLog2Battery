@@ -1,4 +1,5 @@
 import os
+from enum import StrEnum
 
 import dash
 import dash_bootstrap_components as dbc
@@ -9,41 +10,57 @@ from Modules.Core import parse_files, store_data, viz_battery_data
 from Modules.FileProcess import INSTANCE_PATH
 from .utils import format_status_prompt, upload_status_prompt
 
-basepath = os.path.dirname(os.path.abspath(__file__))
 
+class ProcessStatus(StrEnum):
+    INIT = "init"
+    SUCCESS = "success"
+    ERROR = "error"
+
+basepath = os.path.dirname(os.path.abspath(__file__))
 app = dash.Dash(__name__, assets_folder=os.path.join(basepath, "assets"))
 app.config.suppress_callback_exceptions = True
 
 du.configure_upload(app=app, folder=INSTANCE_PATH)
 
-__UPLOAD_FAILED_FILES_LIST = []  # A place storing whole error files list
-
 app.layout = dbc.Container([
-    # Those 3 stores will be modified by `upload-prompt.js` => js code
-    # It is all belongs to Upload procedure
-    dcc.Store(
-        id="js-update-prompt",
-        data={"show": False, "title": None, "msg": None, "color": "info", "dismissable": None}
-    ),
-    dcc.Store(id="js-new-error-file", data={"filename": None}),  # Get a new error file
-    dcc.Store(id="js-error-file-empty-trigger", data={"status": None}),  # clear the FAILED_FILES_LIST
-
     # if upload completed, it will determine whether to proceed to the next step (parse)
-    dcc.Store(id="is-upload-completed", data={"status": False, "filepath": [], "all-failed": False}),
-    dcc.Store(id="is-parse-begin", data={"status": False}),
+    dcc.Store(id="upload-results", data={"status": ProcessStatus.INIT, "filepath": []}),
+    dcc.Store(id="parse-trigger", data={"status": ProcessStatus.INIT}),
 
     # make sure that parsed-data is not empty
-    dcc.Store(id="parsed-data", data={"status": False, "value": []}),
-    dcc.Store(id="visualization-trigger", data={"status": False}),
+    dcc.Store(id="parsed-data", data={"status": ProcessStatus.INIT, "value": []}),
+    dcc.Store(id="viz-trigger", data={"status": ProcessStatus.INIT}),
+    # Store for data operation mode (init or add)
+    dcc.Store(id="operation-mode", data="init"),
 
     dbc.Row(
         dbc.Col(html.H1("Xiaomi Battery Log Analyzer", className="text-center my-4"), width=12)
     ),
     dbc.Row(
         dbc.Alert(
-            "Kindly Note: For large files, upload may take some time. Please wait for confirmation.",
-            color="info", dismissable=False, className="mb-3"
+            [
+                html.Div("Operation Mode Description:", className="fw-bold"),
+                html.Div("Initialize mode will clear the existing database and recreate it, and Add mode will preserve existing data and add new data."),
+            ],color="info", dismissable=False, className="mb-3"
         )
+    ),
+
+    # Add dropdown menu for operation mode selection
+    dbc.Row(
+        dbc.Col([
+            dbc.Label("Select Operation Mode:", className="mb-2"),
+            dcc.Dropdown(
+                id="mode-dropdown",
+                options=[
+                    {"label": "Initialize Database (Overwrite Existing Data)", "value": "init"},
+                    {"label": "Append to Existing Database", "value": "add"}
+                ],
+                value="init",
+                clearable=False,
+                className="mb-4",
+                disabled=False  # Will be controlled by callback
+            )
+        ], width=6, className="mx-auto")
     ),
     dbc.Row(
         dbc.Col([
@@ -54,6 +71,7 @@ app.layout = dbc.Container([
                         text="Drag files to here, or click it to select file(s). After that file(s) will be automatically uploaded. No more than 10 files.",
                         max_files=10,
                         upload_id="upload",
+                        is_uploading=False,
                         default_style={
                             "width": "100%",
                             "height": "100%",
@@ -67,8 +85,7 @@ app.layout = dbc.Container([
                 "borderRadius": "8px",
                 "background-color": "#f8f9fa"
             }, className="p-3")
-        ], width=12),
-        className="mb-4"
+        ], width=12), className="mb-4"
     ),
     dbc.Row(html.Div(id="upload-status")),
     dbc.Row(html.Div(id="parse-status")),
@@ -78,80 +95,100 @@ app.layout = dbc.Container([
 
 
 @app.callback(
-    Output(component_id="js-error-file-empty-trigger", component_property="data"),
-    Input(component_id="js-error-file-empty-trigger", component_property="data"),
+    Output(component_id="mode-dropdown", component_property="disabled"),
+    [
+        Input(component_id="upload-component", component_property="isUploading"),
+        Input(component_id="upload-results", component_property="data"),
+        Input(component_id="parsed-data", component_property="data"),
+        Input(component_id="viz-trigger", component_property="data"),
+        Input(component_id="viz-status", component_property="children")
+    ],
     prevent_initial_call=True
 )
-def empty_error_list(data: dict[str, bool | None]) -> NoUpdate:
-    """
-    Use a variable to clear the global variable **__FAILED_FILES_LIST**.
-    """
-    global __UPLOAD_FAILED_FILES_LIST
-    __UPLOAD_FAILED_FILES_LIST = []
+def manage_dropdown_status(
+        is_uploading: bool,
+        upload_res: dict[str, str | bool | list[str]],
+        parsed_data: dict[str, str | list[str]],
+        viz_trigger: dict[str, str],
+        viz_status: dbc.Alert | html.Div | NoUpdate
+) -> bool:
+    if is_uploading:
+        return is_uploading
 
-    return no_update
+    if upload_res.get("status", ProcessStatus.INIT) == ProcessStatus.ERROR:
+        return False
+    if parsed_data.get("status", ProcessStatus.INIT) == ProcessStatus.ERROR:
+        return False
+    if viz_trigger.get("status", ProcessStatus.INIT) == ProcessStatus.ERROR:
+        return False
+
+    if viz_status:
+        return False
+
+    if upload_res.get("status", ProcessStatus.INIT) == ProcessStatus.SUCCESS:
+        return True
+
+    return False
+
+@app.callback(
+    Output(component_id="operation-mode", component_property="data"),
+    Input(component_id="mode-dropdown", component_property="value")
+)
+def update_operation_mode(selected_mode: str) -> str:
+    """
+    Update the operation mode store based on dropdown selection.
+    """
+    return selected_mode
 
 
 @app.callback(
-    Output(component_id="js-new-error-file", component_property="data"),
-    Input(component_id="js-new-error-file", component_property="data"),
-)
-def add_new_error_file(data: dict[str, str]) -> NoUpdate:
-    """
-    Use a callback to add the error file to a global variable **__FAILED_FILES_LIST**.
-    """
-    global __UPLOAD_FAILED_FILES_LIST
-    unique_list = set(__UPLOAD_FAILED_FILES_LIST)
-
-    filename = data.get("filename", None)
-    if filename and isinstance(filename, str):
-        unique_list.add(filename)
-
-    __UPLOAD_FAILED_FILES_LIST = list(unique_list)
-
-    return no_update
-
-
-@app.callback(
-    Output(component_id="upload-status", component_property="children", allow_duplicate=True),
-    Input(component_id="js-update-prompt", component_property="data"),
+    [
+        Output(component_id="upload-status", component_property="children", allow_duplicate=True),
+        Output(component_id="parse-status", component_property="children", allow_duplicate=True),
+        Output(component_id="viz-status", component_property="children", allow_duplicate=True),
+        Output(component_id="output-container", component_property="children", allow_duplicate=True)
+    ],
+    Input(component_id="upload-component", component_property="isUploading"),
     prevent_initial_call=True
 )
-def render_upload_0t1_prompt(data: dict[str, str | bool]) -> dbc.Alert | html.Div:
+def on_upload_start(is_uploading: bool) -> tuple[
+    dbc.Alert | html.Div | NoUpdate, html.Div | NoUpdate, html.Div | NoUpdate, html.Div | NoUpdate]:
     """
-    Render a prompt when upload beginning, its message was operated by customized js file.
+    Render a prompt when upload beginning. Force to clear all information and graphs.
     """
-    keywords = ["title", "msg", "color"]
-    if data.get("show") and any((data.get(keyword) is not None) for keyword in keywords):
-        return format_status_prompt(title=data.get("title"), msg=[data.get("msg")], color=data.get("color"))
+    if is_uploading:
+        return format_status_prompt(
+            title="Uploading...",
+            msg=[html.P("Now files are uploading. It may take some time, so hang tight...")],
+            color="info", dismissable=False
+        ), html.Div(), html.Div(), html.Div()
 
-    return html.Div()
-
+    return no_update, no_update, no_update, no_update
 
 @du.callback(
     output=[
         Output(component_id="upload-status", component_property="children"),
-        Output(component_id="is-upload-completed", component_property="data")
+        Output(component_id="upload-results", component_property="data")
     ],
     id="upload-component"
 )
-def upload_handler(status: du.UploadStatus) -> tuple[dbc.Alert, dict[str, bool | str]]:
+def on_uploading(status: du.UploadStatus) -> tuple[dbc.Alert, dict[str, bool | str]]:
     filepaths = [os.fspath(fp) for fp in status.uploaded_files]
-    failed_files = __UPLOAD_FAILED_FILES_LIST
+    failed_files = status.failed_files if hasattr(status, "failed_files") else []
 
     if not status.is_completed:
         status_message, color = upload_status_prompt(success=filepaths, failed=failed_files, complete=False)
         status_display = format_status_prompt(title="Uploading...", msg=status_message, color=color, dismissable=False)
 
-        return status_display, {"status": False, "filepath": [], "all-failed": False}
+        return status_display, {"status": False, "filepath": []}
 
     status_message, color = upload_status_prompt(success=filepaths, failed=failed_files, complete=True)
     status_display = format_status_prompt(title="Upload Completed", msg=status_message, color=color, dismissable=True)
 
     success_count = len(filepaths)
-    failed_count = len(failed_files)
-    all_failed = True if success_count < 1 and failed_count > 0 else False
-    dcc_store_data = {"status": True, "filepath": filepaths, "all-failed": all_failed}
+
+    proc_status = ProcessStatus.SUCCESS if success_count > 0 else ProcessStatus.ERROR
+    dcc_store_data = {"status": proc_status, "filepath": filepaths}
 
     return status_display, dcc_store_data
 
@@ -159,70 +196,70 @@ def upload_handler(status: du.UploadStatus) -> tuple[dbc.Alert, dict[str, bool |
 @app.callback(
     [
         Output(component_id="parse-status", component_property="children", allow_duplicate=True),
-        Output(component_id="is-parse-begin", component_property="data")
+        Output(component_id="parse-trigger", component_property="data")
     ],
-    Input(component_id="is-upload-completed", component_property="data"),
+    Input(component_id="upload-results", component_property="data"),
     prevent_initial_call=True
 )
-def begin_parse(data: dict[str, bool | list[str]]) -> tuple[html.Div | dbc.Alert, dict[str, bool]]:
-    status = data.get("status", False)
-    total_files = len(data.get("filepath", []))
-    is_all_failed = data.get("all-failed", False)
+def parse_trigger(
+        upload_res: dict[str, str | bool | list[str]]
+) -> tuple[html.Div | dbc.Alert | NoUpdate, dict[str, str] | NoUpdate]:
+    if upload_res.get("status", ProcessStatus.INIT) != ProcessStatus.SUCCESS:
+        return no_update, no_update
 
-    if not status or is_all_failed:
-        return html.Div(), {"status": False}
-
-    message = [html.P(f"Preparing for parsing data (Total: {total_files}). It may take some time. Hang tight...")]
+    total_files = len(upload_res.get("filepath", []))
+    message = [html.P(f"Parsing and storing data (Total: {total_files}) now. It may take some time. Hang tight...")]
     status_display = format_status_prompt(title="Parsing Data", msg=message, color="info", dismissable=False)
-    is_parse_begin = {"status": True}
 
-    return status_display, is_parse_begin
+    return status_display, {"status": ProcessStatus.SUCCESS}
 
 
 @app.callback(
     Output(component_id="parsed-data", component_property="data"),
-    Input(component_id="is-parse-begin", component_property="data"),
-    State(component_id="is-upload-completed", component_property="data")
+    Input(component_id="parse-trigger", component_property="data"),
+    State(component_id="upload-results", component_property="data")
 )
 def parse_handler(
-        parse_data: dict[str, bool], upload_info: dict[str, bool | list[str]]
-) -> dict[str, bool | list[dict[str, str | int]]]:
-    status = parse_data.get("status", False)
-    upload_status = upload_info.get("status", False)
+        parsed_data: dict[str, str | list[str]], upload_res: dict[str, str | bool | list[str]]
+) -> dict[str, str | list[dict[str, str | int]]] | NoUpdate:
+    if parsed_data.get("status", ProcessStatus.INIT) != ProcessStatus.SUCCESS:
+        return no_update
 
-    if not status or not upload_status:
-        return {"status": False, "value": []}
-
-    filepath: list[str] = upload_info.get("filepath", [])
-    parsed_data = parse_files(filepath_list=filepath)
-
-    return {"status": True, "value": parsed_data}
+    parsed_data = parse_files(filepath_list=upload_res.get("filepath", []))
+    return {"status": ProcessStatus.SUCCESS, "value": parsed_data}
 
 
 @app.callback(
     [
-        Output(component_id="parse-status", component_property="children"),
-        Output(component_id="visualization-trigger", component_property="data")
+        Output(component_id="parse-status", component_property="children", allow_duplicate=True),
+        Output(component_id="viz-trigger", component_property="data")
     ],
-    Input(component_id="parsed-data", component_property="data")
+    Input(component_id="parsed-data", component_property="data"),
+    State(component_id="operation-mode", component_property="data"),
+    prevent_initial_call=True
 )
 def store_handler(
-        data: dict[str, bool | list[dict[str, str | int]]]
-) -> tuple[dbc.Alert | html.Div | NoUpdate, dict[str, bool]]:
-    status = data.get("status", False)
+        data: dict[str, str | list[dict[str, str | int]]],
+        operation_mode: str
+) -> tuple[dbc.Alert | html.Div | NoUpdate, dict[str, str] | NoUpdate]:
+    if data.get("status", ProcessStatus.INIT) == ProcessStatus.INIT:
+        return no_update, no_update
 
-    if not status:
-        return no_update, {"status": False}
+    if data.get("status", ProcessStatus.INIT) == ProcessStatus.ERROR:
+        return format_status_prompt(
+            title="Failed to parse data", msg=[html.P("No valid data found.")], color="danger", dismissable=True
+        ), {"status": ProcessStatus.ERROR}
 
-    parsed_data: list[dict[str, str | int]] = data.get("value", [])
-    result = store_data(data=parsed_data)
+    result = store_data(data=data.get("value", []), mode=operation_mode)
     if not result:
-        return html.Div(), {"status": False}   # TODO: Failed prompt
+        return format_status_prompt(
+            title="Failed to store data", msg=[html.P("Database error.")], color="danger", dismissable=True
+        ), {"status": ProcessStatus.ERROR}
 
-    message = [html.P(f"The data was been parsed successfully.")]
-    status_display = format_status_prompt(title="Parse Completed", msg=message, color="success", dismissable=True)
-
-    return status_display, {"status": True}
+    msg = "Database initialized." if operation_mode == "init" else "Data appended."
+    return format_status_prompt(
+        title="Success for Parsing and Storing data", msg=[html.P(msg)], color="success", dismissable=True
+    ), {"status": ProcessStatus.SUCCESS}
 
 
 @app.callback(
@@ -230,23 +267,23 @@ def store_handler(
         Output(component_id="viz-status", component_property="children"),
         Output(component_id="output-container", component_property="children")
     ],
-    Input(component_id="visualization-trigger", component_property="data")
+    Input(component_id="viz-trigger", component_property="data"),
+    prevent_initial_call=True
 )
-def viz_handler(trigger: dict[str, bool]) -> tuple[dbc.Alert | html.Div | NoUpdate, html.Div]:
-    status = trigger.get("status", False)
-
-    if not status:
-        return no_update, html.Div()
+def viz_handler(trigger: dict[str, str]) -> tuple[dbc.Alert | html.Div | NoUpdate, html.Div | NoUpdate]:
+    status = trigger.get("status", ProcessStatus.INIT)
+    if status == ProcessStatus.INIT or status == ProcessStatus.ERROR:
+        return no_update, no_update
 
     graph, num = viz_battery_data()
-    if not graph:
-        return html.Div(), html.Div()   # TODO: Failed prompt
+    if graph is None:
+        return format_status_prompt(
+            title="Generate Error", msg=[html.P("Visualization failed.")], color="danger",dismissable=True
+        ), html.Div()
 
-    msg_prefix = f"{num} graph was" if num < 2 else f"{num} graphs were"
-    message = [html.P(f"{msg_prefix} generated successfully.")]
-    status_display = format_status_prompt(title="Graph Generated", msg=message, color="success", dismissable=True)
-
-    return status_display, graph
+    return format_status_prompt(
+        title="Visualize Success", msg=[html.P(f"{num} graph(s) generated.")], color="success", dismissable=True
+    ), graph
 
 
 if __name__ == "__main__":

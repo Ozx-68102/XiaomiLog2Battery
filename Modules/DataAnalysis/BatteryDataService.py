@@ -63,6 +63,29 @@ class BatteryDataService:
             print(f"Failed to get all battery data: {e}")
             return None
 
+    def append_battery_data(self, data: dict[str, str | int] | list[dict[str, str | int]]) -> bool:
+        """
+        Append battery data to the existing table without rebuilding it.
+        :param data: Battery data.
+        :return: True if data was saved successfully
+        """
+        data_list = [data] if isinstance(data, dict) else data
+
+        if not data_list:
+            raise ValueError("Empty data.")
+
+        saved_successful = []
+        for item in data_list:
+            try:
+                self._validate_battery_data(item)
+                record_id = save_data_iar(item)
+                saved_successful.append(record_id)
+            except Exception as e:
+                print(f"Save error: {e}. Log capture time: {item.get("log_capture_time")}")
+                continue
+
+        return False if not saved_successful else True
+
     @staticmethod
     def get_battery_data_by_time(start: str | None, end: str | None) -> list[dict[str, str | int]] | None:
         try:
