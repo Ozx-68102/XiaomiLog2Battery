@@ -21,7 +21,7 @@ Python Version Requirement: **3.13**<br />
 Main Program Entry: `run.py`, Web Interface Language: **English only**.<br />
 Usage Steps:<br />
 1. Prerequisite: Ensure Python 3.13 is installed (recommended to download from [Python Official Website](https://www.python.org/));<br />
-2. Dependency Installation: Run `PackageChecker.py` — the program will automatically detect and install all required third-party libraries (no manual `pip install` needed);<br />
+2. Dependency Installation: Run `Modules/Core/PackageCheckers.py` — the program will automatically detect and install all required third-party libraries (including locally compiled `dash-uploader`, no manual `pip install` needed);<br />
 3. Start Service: Run `run.py` — the program will automatically start a local Web server (default address: http://localhost:8050/ ) and open a browser to navigate to the analysis panel;<br />
 4. Analyze Logs: On the Web panel's upload area, drag and drop Xiaomi log `zip` files (e.g., `bugreport-2024-10-01-001217.zip`). The system will automatically complete "decompression->parsing->data storage->chart generation" and finally display results on the page.<br />
 
@@ -33,7 +33,7 @@ Debugging Suggestion: It is recommended to open the project with `PyCharm 2024.1
 1. **Web 交互与界面模块（Dashboard）**
    - 基于 `Dash` 框架构建本地 Web 面板，实现页面布局、组件渲染与交互逻辑（如文件上传触发图表更新）；
    - 使用 `dash-bootstrap-components` 优化 UI 结构（容器、卡片、行布局等），提升界面规整性；
-   - 集成自定义 `dash-uploader` 组件【本地 whl 安装，基于已归档项目的**自定义 Fork 版本（由本人维护）**：[dash-uploader](https://github.com/Ozx-68102/dash-uploader)】，支持多文件拖拽上传，简化用户操作；
+   - 集成自定义 `dash-uploader` 组件（本地 whl 安装，基于已归档项目的**自定义 Fork 版本（由本人维护）**：[dash-uploader](https://github.com/Ozx-68102/dash-uploader)），支持多文件拖拽上传，简化用户操作；
    - 通过 `threading.Timer` 实现服务启动后自动打开浏览器，优化用户体验；
    - 支持两种操作模式：初始化模式（重建数据库）和追加模式（向现有数据库添加数据）。
 
@@ -61,7 +61,7 @@ Debugging Suggestion: It is recommended to open the project with `PyCharm 2024.1
 
 5. **依赖管理工具**
    - 基于 `sys` 与 `subprocess` 实现 `PackageCheckers.py`，自动检测第三方库安装状态，缺失时自动执行安装；
-   - 支持从本地 whl 文件安装自定义库，确保依赖一致性和部署可靠性；
+   - 支持从本地 whl 文件安装自定义库（如 `dash-uploader`），确保依赖一致性和部署可靠性；
    - 对特定版本依赖进行版本校验，确保环境一致性。
 
 6. **跨平台适配**
@@ -102,7 +102,7 @@ Debugging Suggestion: It is recommended to open the project with `PyCharm 2024.1
 
 5. **Dependency Management Tool**
    - Implements `PackageCheckers.py` based on `sys` and `subprocess` to automatically detect the installation status of third-party libraries and execute installation if missing;
-   - Supports installing custom libraries from local whl files, ensuring dependency consistency and deployment reliability;
+   - Supports installing custom libraries from local whl files (e.g., `dash-uploader`), ensuring dependency consistency and deployment reliability;
    - Performs version verification for specific dependencies to ensure environment consistency.
 
 6. **Cross-Platform Adaptation**
