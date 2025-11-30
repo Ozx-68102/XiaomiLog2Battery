@@ -99,7 +99,10 @@ app.layout = dbc.Container([
 
 
 @app.callback(
-    Output(component_id="mode-dropdown", component_property="disabled"),
+    [
+        Output(component_id="mode-dropdown", component_property="disabled"),
+        Output(component_id="upload-component", component_property="disabled")
+    ],
     [
         Input(component_id="upload-component", component_property="isUploading"),
         Input(component_id="upload-results", component_property="data"),
@@ -109,28 +112,30 @@ app.layout = dbc.Container([
     ],
     prevent_initial_call=True
 )
-def manage_dropdown_status(
+def manage_interaction_state(
         is_uploading: bool,
         upload_res: dict[str, str | bool | list[str]],
         parsed_data: dict[str, str | list[str]],
         viz_trigger: dict[str, str],
         viz_res: dict[str, str]
-) -> bool:
-    if is_uploading:
-        return True
+) -> tuple[bool, bool]:
+    is_processing = False   # `True` when upload finished but other process not yet
 
-    pipeline_states = [upload_res, parsed_data, viz_trigger, viz_res]
-    if any(state.get("status", ProcessStatus.INIT) == ProcessStatus.ERROR for state in pipeline_states):
-        return False
-
-    if viz_res.get("status", ProcessStatus.INIT) == ProcessStatus.SUCCESS:
-        return False
-
+    # if upload finished...
     if upload_res.get("status", ProcessStatus.INIT) == ProcessStatus.SUCCESS:
-        return True
+        is_processing = True
 
-    # default
-    return False
+        pipeline_states = [parsed_data, viz_trigger, viz_res]
+        if any(state.get("status", ProcessStatus.INIT) == ProcessStatus.ERROR for state in pipeline_states):
+            is_processing = False
+
+        if viz_res.get("status", ProcessStatus.INIT) == ProcessStatus.SUCCESS:
+            is_processing = False
+
+    dropdown_disabled = is_uploading or is_processing
+    uploader_disabled = is_processing
+
+    return dropdown_disabled, uploader_disabled
 
 @app.callback(
     Output(component_id="operation-mode", component_property="data"),
