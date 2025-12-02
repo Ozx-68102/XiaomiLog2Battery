@@ -67,6 +67,7 @@ class BatteryDataService:
         """
         Append battery data to the existing table without rebuilding it.
         :param data: Battery data.
+        :raise ValueError: When data is empty
         :return: True if data was saved successfully
         """
         data_list = [data] if isinstance(data, dict) else data

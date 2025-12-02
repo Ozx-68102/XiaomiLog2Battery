@@ -10,6 +10,8 @@ from Modules.Core import parse_files, store_data, viz_battery_data
 from Modules.FileProcess import INSTANCE_PATH
 from .utils import format_status_prompt, upload_status_prompt
 
+__MAX_FILES = 40
+
 
 class ProcessStatus(StrEnum):
     INIT = "init"
@@ -70,10 +72,13 @@ app.layout = dbc.Container([
         dbc.Col([
             dbc.Card([
                 dbc.CardBody([
-                    du.Upload(  # `filetypes` parameter does not work anymore
+                    du.Upload(
                         id="upload-component",
-                        text="Drag files to here, or click it to select file(s). After that file(s) will be automatically uploaded. No more than 10 files.",
-                        max_files=10,
+                        text=f"Drag files to here, or click it to select file(s). After that file(s) will be automatically uploaded. No more than {__MAX_FILES} files.",
+                        text_completed="Upload Accomplished !",
+                        text_completed_no_suffix=True,
+                        max_files=__MAX_FILES,
+                        filetypes=[".zip"],
                         upload_id="upload",
                         is_uploading=False,
                         default_style={
@@ -279,10 +284,23 @@ def store_handler(
             title="Failed to parse data", msg=[html.P("No valid data found.")], color="danger", dismissable=True
         ), {"status": ProcessStatus.ERROR}
 
-    result = store_data(data=data.get("value", []), mode=operation_mode)
-    if not result:
+    parsed_data = data.get("value", [])
+    if not parsed_data:
         return format_status_prompt(
-            title="Failed to store data", msg=[html.P("Database error.")], color="danger", dismissable=True
+            title="No Data Found",
+            msg=[html.P("Files were processed but no battery logs were found or files were invalid.")],
+            color="danger", dismissable=True
+        ), {"status": ProcessStatus.ERROR}
+
+    try:
+        result = store_data(data=parsed_data, mode=operation_mode)
+        if not result:
+            return format_status_prompt(
+                title="Failed to store data", msg=[html.P("Database error.")], color="danger", dismissable=True
+            ), {"status": ProcessStatus.ERROR}
+    except Exception as e:
+        return format_status_prompt(
+            title="Database Error", msg=[html.P(f"Error: {str(e)}")], color="danger", dismissable=True
         ), {"status": ProcessStatus.ERROR}
 
     msg = "Database initialized." if operation_mode == "init" else "Data appended."

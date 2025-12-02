@@ -5,8 +5,12 @@ import dash_bootstrap_components as dbc
 from dash import html
 
 
-def format_status_prompt(title: str, msg: list, color: Literal["info", "warning", "danger", "success"] = "info",
-                         dismissable: bool | None = None) -> dbc.Alert:
+def format_status_prompt(
+        title: str,
+        msg: list[html.P],
+        color: Literal["info", "warning", "danger", "success"] = "info",
+        dismissable: bool | None = None
+) -> dbc.Alert:
     return dbc.Alert([
         dbc.Row(html.H4(title)),
         dbc.Row(html.Hr()),
@@ -14,8 +18,9 @@ def format_status_prompt(title: str, msg: list, color: Literal["info", "warning"
     ], color=color, dismissable=dismissable)
 
 
-def upload_status_prompt(success: list[str], failed: list[str], complete: bool) -> tuple[
-    list[html.P | html.Ul], Literal["info", "warning", "danger", "success"]]:
+def upload_status_prompt(
+        success: list[str], failed: list[str], complete: bool
+) -> tuple[list[html.P | html.Ul], Literal["info", "warning", "danger", "success"]]:
     success_count = len(success)
     failed_count = len(failed)
 
