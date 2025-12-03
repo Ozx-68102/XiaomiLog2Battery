@@ -11,6 +11,13 @@ class ProcessStatus(StrEnum):
     ERROR = "error"
 
 
+class ThreadCountMode(StrEnum):
+    """Thread count performance mode enumeration"""
+    LOW = "low"  # Low performance mode (conservative resource usage)
+    BALANCED = "balanced"  # Balanced mode (recommended)
+    HIGH = "high"  # High performance mode (maximum resource usage)
+
+
 def create_stores() -> list[dcc.Store]:
     """
     Create all data storage components for the app.
@@ -25,6 +32,8 @@ def create_stores() -> list[dcc.Store]:
         dcc.Store(id="viz-res", data={"status": ProcessStatus.INIT}),
         # Store for data operation mode (init or add)
         dcc.Store(id="operation-mode", data="init"),
+        # Store for thread count setting
+        dcc.Store(id="thread-count", data=ThreadCountMode.BALANCED),
     ]
 
 
@@ -39,14 +48,38 @@ def create_header() -> dbc.Row:
 
 def create_mode_info() -> dbc.Row:
     """
-    Create the information about the operation mode.
+    Create the information about the operation mode and thread count settings.
     """
     return dbc.Row(
         dbc.Alert(
             [
-                html.Div("Operation Mode Description:", className="fw-bold"),
-                html.Div(
-                    "Initialize mode will clear the existing database and recreate it, and Add mode will preserve existing data and add new data."),
+                html.Div([
+                    html.Div("Operation Mode:", className="fw-bold"),
+                    html.Ul([
+                        html.Li("Initialize mode: Clear the existing database and recreate it."),
+                        html.Li("Add mode: Preserve existing data and append new data.")
+                    ])
+                ], className="mb-3"),
+                html.Div([
+                    html.Div("Processing Performance Mode:", className="fw-bold"),
+                    html.Ul([
+                        html.Li([
+                            html.Strong("Low Mode: "),
+                            "Conservative resource usage. Suitable for systems with limited resources or when you need to keep the system responsive."
+                        ]),
+                        html.Li([
+                            html.Strong("Balanced Mode (Recommended): "),
+                            "Optimal balance between processing speed and system resource usage. Best for most users."
+                        ]),
+                        html.Li([
+                            html.Strong("High Mode: "),
+                            "Maximum performance mode.",
+                            html.Br(),
+                            html.Strong("Warning: ", className="text-warning"),
+                            "This mode will maximize system resource usage and may cause system lag or freezing, especially on systems with limited CPU cores or memory."
+                        ], className="text-warning")
+                    ])
+                ])
             ],
             color="info",
             dismissable=False,
@@ -55,34 +88,66 @@ def create_mode_info() -> dbc.Row:
     )
 
 
-def create_mode_selector() -> dbc.Row:
+def create_mode_selector() -> dbc.Col:
     """
     Create the dropdown menu for the operation mode.
     """
-    return dbc.Row(
-        dbc.Col([
-            dbc.Label("Select Operation Mode:", className="mb-2"),
-            dcc.Dropdown(
-                id="mode-dropdown",
-                options=[
-                    {"label": "Initialize Database (Overwrite Existing Data)", "value": "init"},
-                    {"label": "Append to Existing Database", "value": "add"}
-                ],
-                value="init",
-                clearable=False,
-                searchable=False,
-                className="mb-4",
-                disabled=False  # Will be controlled by callback
-            )
-        ], width=6, className="mx-auto user-select-none")
-    )
+    return dbc.Col([
+        dbc.Label("Select Operation Mode:", className="mb-2"),
+        dcc.Dropdown(
+            id="mode-dropdown",
+            options=[
+                {"label": "Initialize Database (Overwrite Existing Data)", "value": "init"},
+                {"label": "Append to Existing Database", "value": "add"}
+            ],
+            value="init",
+            clearable=False,
+            searchable=False,
+            className="mb-4",
+            disabled=False  # Will be controlled by callback
+        )
+    ], width=6, className="user-select-none")
+
+
+def create_thread_count_selector() -> dbc.Col:
+    """
+    Create the dropdown menu for processing performance mode selection.
+    """
+    options = [
+        {"label": "Low Mode (Conservative)", "value": ThreadCountMode.LOW},
+        {"label": "Balanced Mode (Recommended)", "value": ThreadCountMode.BALANCED},
+        {"label": "High Mode (Maximum Performance)", "value": ThreadCountMode.HIGH}
+    ]
+
+    return dbc.Col([
+        dbc.Label("Processing Performance Mode:", className="mb-2"),
+        dcc.Dropdown(
+            id="thread-count-dropdown",
+            options=options,
+            value=ThreadCountMode.BALANCED,  # Default to balanced
+            clearable=False,
+            searchable=False,
+            className="mb-4",
+            disabled=False  # Will be controlled by callback
+        )
+    ], width=6, className="user-select-none")
+
+
+def create_settings_row() -> dbc.Row:
+    """
+    Create a row containing both mode selector and thread count selector.
+    """
+    return dbc.Row([
+        create_mode_selector(),
+        create_thread_count_selector()
+    ], className="mb-4")
 
 
 def create_upload_component(
         max_files: int,
         filetype: list[str] | None = None,
         complete_message: str = "Uploaded: ",
-        only_message: bool = False,
+        only_show_message: bool = False,
         upload_id: str = "upload",
 ) -> dbc.Row:
     """
@@ -96,7 +161,7 @@ def create_upload_component(
                         id="upload-component",
                         text=f"Drag files to here, or click it to select file(s). After that file(s) will be automatically uploaded. No more than {max_files} files.",
                         text_completed=complete_message,
-                        text_completed_no_suffix=only_message,
+                        text_completed_no_suffix=only_show_message,
                         max_files=max_files,
                         filetypes=filetype,
                         upload_id=upload_id,

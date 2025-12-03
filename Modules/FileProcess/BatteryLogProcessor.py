@@ -82,10 +82,11 @@ class BatteryLogProcessor:
             except Exception as e:
                 raise RuntimeError(f"Failed to process {os.path.basename(fp)}: {e}")
 
-    def process_xiaomi_log(self, fps: list[str]) -> list[str]:
+    def process_xiaomi_log(self, fps: list[str], thread_count: int) -> list[str]:
         """
         Process or extract one or more Xiaomi log files from zip files.
         :param fps: A list of Xiaomi zip file paths.
+        :param thread_count: Number of worker threads/processes.
         :return: A list of extracted Xiaomi log files.
         """
         if not isinstance(fps, list):
@@ -94,8 +95,13 @@ class BatteryLogProcessor:
         if not fps:
             return []
 
+        if thread_count < 1:
+            raise ValueError(f"Thread count must be greater than 0, current value: {thread_count}")
+
         final_paths = []
-        workers = min(len(fps), os.cpu_count(), 8)
+        # Use the provided thread count directly
+        workers = min(len(fps), thread_count)
+
         with ProcessPoolExecutor(max_workers=workers) as executor:
             futures: list[Future] = [executor.submit(self._extract_single_log, file) for file in fps]
 

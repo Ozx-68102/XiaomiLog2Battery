@@ -1,4 +1,5 @@
 import os
+from typing import Literal
 
 import dash
 import dash_bootstrap_components as dbc
@@ -19,9 +20,12 @@ app.layout = dbc.Container([
     *components.create_stores(),
     components.create_header(),
     components.create_mode_info(),
-    components.create_mode_selector(),
+    components.create_settings_row(),
     components.create_upload_component(
-        max_files=40, filetype=[".zip"], complete_message="Upload Accomplished !", only_message=True
+        max_files=40,
+        filetype=[".zip"],
+        complete_message="Upload Accomplished! You can continue to upload by dragging files or clicking me",
+        only_show_message=True
     ),
     *components.create_status_zones(),
     components.create_graph_zone()
@@ -31,6 +35,7 @@ app.layout = dbc.Container([
 @app.callback(
     [
         Output(component_id="mode-dropdown", component_property="disabled"),
+        Output(component_id="thread-count-dropdown", component_property="disabled"),
         Output(component_id="upload-component", component_property="disabled")
     ],
     [
@@ -48,7 +53,7 @@ def manage_interaction_state(
         parsed_data: dict[str, str | list[str]],
         viz_trigger: dict[str, str],
         viz_res: dict[str, str]
-) -> tuple[bool, bool]:
+) -> tuple[bool, bool, bool]:
     is_processing = False   # `True` when upload finished but other process not yet
 
     # if upload finished...
@@ -68,7 +73,7 @@ def manage_interaction_state(
     dropdown_disabled = is_uploading or is_processing
     uploader_disabled = is_processing
 
-    return dropdown_disabled, uploader_disabled
+    return dropdown_disabled, dropdown_disabled, uploader_disabled
 
 @app.callback(
     Output(component_id="operation-mode", component_property="data"),
@@ -79,6 +84,17 @@ def update_operation_mode(selected_mode: str) -> str:
     Update the operation mode store based on dropdown selection.
     """
     return selected_mode
+
+
+@app.callback(
+    Output(component_id="thread-count", component_property="data"),
+    Input(component_id="thread-count-dropdown", component_property="value")
+)
+def update_thread_count(selected_count: str) -> str:
+    """
+    Update the thread count store based on dropdown selection.
+    """
+    return selected_count
 
 
 @app.callback(
@@ -179,15 +195,19 @@ def parse_trigger(
 @app.callback(
     Output(component_id="parsed-data", component_property="data"),
     Input(component_id="parse-trigger", component_property="data"),
-    State(component_id="upload-results", component_property="data")
+    State(component_id="upload-results", component_property="data"),
+    State(component_id="thread-count", component_property="data")
 )
 def parse_handler(
-        parsed_data: dict[str, str | list[str]], upload_res: dict[str, str | bool | list[str]]
+        parsed_data: dict[str, str | list[str]],
+        upload_res: dict[str, str | bool | list[str]],
+        thread_count: Literal["low", "balanced", "high"]
 ) -> dict[str, str | list[dict[str, str | int]]] | NoUpdate:
     if parsed_data.get("status", components.ProcessStatus.INIT) != components.ProcessStatus.SUCCESS:
         return no_update
 
-    parsed_data = parse_files(filepath_list=upload_res.get("filepath", []))
+    # Pass the mode string directly to backend for calculation
+    parsed_data = parse_files(filepath_list=upload_res.get("filepath", []), thread_count_mode=thread_count)
     return {"status": components.ProcessStatus.SUCCESS, "value": parsed_data}
 
 

@@ -1,3 +1,6 @@
+import os
+from typing import Literal
+
 from dash import html, dcc
 
 from Modules.DataAnalysis import BatteryInfoParser, BatteryDataService, PlotlyVisualizer
@@ -10,7 +13,30 @@ _visualizer = PlotlyVisualizer()
 _folder_operator = FolderOperator()
 
 
-def parse_files(filepath_list: list[str]) -> list[dict[str, str | int]]:
+def _calculate_workers(mode: Literal["low", "balanced", "high"], file_count: int) -> int:
+    """
+    Calculate the number of workers based on mode, file count, and CPU count.
+    :param mode: The performance mode (low, balanced, high).
+    :param file_count: Number of files to process.
+    :raise ValueError: If mode is invalid.
+    :return: Calculated number of workers.
+    """
+    cpu_count = os.cpu_count() or 1
+    if mode == "low":
+        # Low mode: min(cpu_count // 2, file_count, 4)
+        return min(max(cpu_count // 2, 1), file_count, 4)
+    elif mode == "balanced":
+        # Balanced mode: min(int(cpu_count * 0.75), file_count, 6)
+        return min(max(int(cpu_count * 0.75), 1), file_count, 6)
+    elif mode == "high":
+        # High mode: min(cpu_count, file_count, 8) - original logic
+        return min(cpu_count, file_count, 8)
+
+    raise ValueError("Invalid mode.")
+
+
+def parse_files(filepath_list: list[str], thread_count_mode: Literal["low", "balanced", "high"] = "balanced") -> list[
+    dict[str, str | int]]:
     print(f"Start to process {len(filepath_list)} zip file(s).")
 
     # Clear all previously extracted files before processing new uploads
@@ -20,11 +46,16 @@ def parse_files(filepath_list: list[str]) -> list[dict[str, str | int]]:
     except Exception as e:
         print(f"Warning: Failed to clear extracted files: {e}")
 
-    txt_list = _log_processor.process_xiaomi_log(fps=filepath_list)
+    thread_count = _calculate_workers(mode=thread_count_mode, file_count=len(filepath_list))
+    print(f"Using {thread_count} worker(s) for processing (mode: {thread_count_mode}).")
+
+    txt_list = _log_processor.process_xiaomi_log(fps=filepath_list, thread_count=thread_count)
     print(f"Done with {len(txt_list)} txt file(s).")
 
     print(f"Start to parse {len(txt_list)} txt file(s).")
-    battery_info = _info_parser.parse_battery_info(tps=txt_list)
+    # Use the same thread count for parsing
+    thread_count_parse = _calculate_workers(mode=thread_count_mode, file_count=len(txt_list))
+    battery_info = _info_parser.parse_battery_info(tps=txt_list, thread_count=thread_count_parse)
     print(f"Done with {len(battery_info)} battery info.")
     return battery_info
 
@@ -60,8 +91,12 @@ def viz_battery_data() -> tuple[html.Div | None, int]:
         health_chart = dcc.Graph(figure=_visualizer.gen_battery_health_chart(data=battery_data))
         graph_count += 1
     except ValueError:
-        print("Your modal is not supported for health chart.")
+        print("Your phone modal is not supported for health chart.")
         health_chart = html.Div()
 
     print(f"Done with visualizing {graph_count} graph(s).")
     return html.Div([changing_chart, health_chart], style={"display": "flex"}), graph_count
+
+
+if __name__ == "__main__":
+    pass

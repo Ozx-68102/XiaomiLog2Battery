@@ -99,10 +99,11 @@ class BatteryInfoParser:
 
         return parsed_data
 
-    def parse_battery_info(self, tps: list[str]) -> list[dict[str, str | int]]:
+    def parse_battery_info(self, tps: list[str], thread_count: int) -> list[dict[str, str | int]]:
         """
         Parse battery information from the given path of files.
         :param tps: A list of paths of txt files.
+        :param thread_count: Number of worker threads/processes.
         :return: A list of battery information.
         """
         if not isinstance(tps, list):
@@ -111,7 +112,12 @@ class BatteryInfoParser:
         if not tps:
             return []
 
-        workers = min(len(tps), os.cpu_count(), 8)
+        if thread_count < 1:
+            raise ValueError(f"Thread count must be greater than 0, current value: {thread_count}")
+
+        # Use the provided thread count directly
+        workers = min(len(tps), thread_count)
+
         with ProcessPoolExecutor(max_workers=workers) as executor:
             futures: list[Future] = [executor.submit(self._parse_single_info, path) for path in tps]
 
