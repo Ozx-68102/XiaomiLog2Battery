@@ -6,7 +6,8 @@ from Modules.FileProcess.FolderOperator import INSTANCE_PATH
 DB_PATH = os.path.join(INSTANCE_PATH, "database.db")
 TABLE_AR_FIELDS = [
     "log_capture_time", "estimated_battery_capacity", "last_learned_battery_capacity", "min_learned_battery_capacity",
-    "max_learned_battery_capacity", "phone_brand", "nickname", "system_version"
+    "max_learned_battery_capacity", "phone_brand", "nickname", "system_version", "design_capacity", "cycle_count",
+    "hardware_capacity"
 ]
 
 
@@ -37,7 +38,10 @@ def init_table_ar() -> None:
             max_learned_battery_capacity INTEGER NOT NULL,
             phone_brand TEXT NOT NULL COLLATE BINARY,
             nickname TEXT NOT NULL COLLATE BINARY,
-            system_version TEXT NOT NULL COLLATE BINARY
+            system_version TEXT NOT NULL COLLATE BINARY,
+            design_capacity INTEGER NOT NULL,
+            cycle_count INTEGER NOT NULL,
+            hardware_capacity INTEGER NOT NULL
         );
         CREATE INDEX IF NOT EXISTS idx_log_capture_time
         ON analysis_results (log_capture_time);
@@ -54,7 +58,7 @@ def save_data_iar(data: dict[str, str | int]) -> int | None:
     :param data: A dictionary containing the following keys: **log_capture_time** (str),
      **estimated_battery_capacity** (int), **last_learned_battery_capacity** (int),
      **min_learned_battery_capacity** (int), **max_learned_battery_capacity** (int), **phone_brand** (str),
-     **nickname** (str), **system_version** (str).
+     **nickname** (str), **system_version** (str), **cycle_count** (int), **hardware_capacity** (int).
     :return: The **id** of the newly inserted record.
     """
     with _get_connection() as conn:

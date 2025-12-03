@@ -7,7 +7,7 @@ import dash_uploader as du
 from dash import html, Output, Input, State, no_update, NoUpdate
 
 from Dashboard import components, utils
-from Modules.Core import parse_files, store_data, viz_battery_data
+from Modules.Core import parse_files, store_data, viz_battery_data, get_max_cycle_count
 from Modules.FileProcess import INSTANCE_PATH
 
 basepath = os.path.dirname(os.path.abspath(__file__))
@@ -28,6 +28,7 @@ app.layout = dbc.Container([
         only_show_message=True
     ),
     *components.create_status_zones(),
+    components.create_cycle_count_alert(),
     components.create_graph_zone()
 ], fluid=True, style={"padding": "15px"})
 
@@ -261,25 +262,38 @@ def store_handler(
     [
         Output(component_id="viz-status", component_property="children"),
         Output(component_id="viz-res", component_property="data"),
-        Output(component_id="graph-zone", component_property="children")
+        Output(component_id="graph-zone", component_property="children"),
+        Output(component_id="max-cycle-count", component_property="children"),
+        Output(component_id="cycle-count-row", component_property="style")
     ],
     Input(component_id="viz-trigger", component_property="data"),
     prevent_initial_call=True
 )
-def viz_handler(trigger: dict[str, str]) -> tuple[dbc.Alert | html.Div | NoUpdate, dict[str, str] | NoUpdate, html.Div | NoUpdate]:
+def viz_handler(trigger: dict[str, str]) -> tuple[dbc.Alert | html.Div | NoUpdate, dict[str, str] | NoUpdate, html.Div | NoUpdate, str | NoUpdate, dict[str, str] | NoUpdate]:
     status = trigger.get("status", components.ProcessStatus.INIT)
     if status == components.ProcessStatus.INIT or status == components.ProcessStatus.ERROR:
-        return no_update, no_update, no_update
+        return (no_update, ) * 5
 
-    graph, num = viz_battery_data()
-    if graph is None:
+    try:
+        graph, num = viz_battery_data()
+        if graph is None:
+            return utils.format_status_prompt(
+                title="Generate Error", msg=[html.P("Visualization failed.")], color="danger",dismissable=True
+            ), {"status": components.ProcessStatus.ERROR}, html.Div(), no_update, {"display": "none"}
+
+        # Calculate max cycle count
+        max_cycle_count = get_max_cycle_count()
+        cycle_count_style = {"display": "block"} if max_cycle_count != "N/A" else {"display": "none"}
+
         return utils.format_status_prompt(
-            title="Generate Error", msg=[html.P("Visualization failed.")], color="danger",dismissable=True
-        ), {"status": components.ProcessStatus.ERROR}, html.Div()
-
-    return utils.format_status_prompt(
-        title="Visualize Success", msg=[html.P(f"{num} graph(s) generated.")], color="success", dismissable=True
-    ), {"status": components.ProcessStatus.SUCCESS}, graph
+            title="Visualize Success", msg=[html.P(f"{num} graph(s) generated.")], color="success", dismissable=True
+        ), {"status": components.ProcessStatus.SUCCESS}, graph, max_cycle_count, cycle_count_style
+    except Exception as e:
+        error_msg = f"Visualization failed: {str(e)}"
+        print(f"Visualization Error: {e}")
+        return utils.format_status_prompt(
+            title="Visualization Error", msg=[html.P(error_msg)], color="danger", dismissable=True
+        ), {"status": components.ProcessStatus.ERROR}, html.Div(), no_update, {"display": "none"}
 
 
 if __name__ == "__main__":

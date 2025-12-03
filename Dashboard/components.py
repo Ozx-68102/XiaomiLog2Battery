@@ -6,6 +6,7 @@ from dash import dcc, html
 
 
 class ProcessStatus(StrEnum):
+    """Process status enumeration"""
     INIT = "init"
     SUCCESS = "success"
     ERROR = "error"
@@ -114,9 +115,9 @@ def create_thread_count_selector() -> dbc.Col:
     Create the dropdown menu for processing performance mode selection.
     """
     options = [
-        {"label": "Low Mode (Conservative)", "value": ThreadCountMode.LOW},
-        {"label": "Balanced Mode (Recommended)", "value": ThreadCountMode.BALANCED},
-        {"label": "High Mode (Maximum Performance)", "value": ThreadCountMode.HIGH}
+        {"label": "Low (Conservative)", "value": ThreadCountMode.LOW},
+        {"label": "Balanced (Recommended)", "value": ThreadCountMode.BALANCED},
+        {"label": "High (Maximum Performance)", "value": ThreadCountMode.HIGH}
     ]
 
     return dbc.Col([
@@ -193,6 +194,27 @@ def create_status_zones() -> list[dbc.Row]:
         dbc.Row(html.Div(id="parse-status")),
         dbc.Row(html.Div(id="viz-status"))
     ]
+
+
+def create_cycle_count_alert() -> dbc.Row:
+    """
+    Create an alert displaying the maximum cycle count, initially hidden.
+    """
+    return dbc.Row(
+        dbc.Col([
+            dbc.Alert(
+                [
+                    html.H5("Cycle Count", className="alert-heading"),
+                    html.Div(id="max-cycle-count", className="h4 mb-0")
+                ],
+                color="info",
+                dismissable=False,
+                className="mb-4"
+            )
+        ], width=12),
+        id="cycle-count-row",
+        style={"display": "none"}  # Initially hidden
+    )
 
 
 def create_graph_zone() -> dbc.Row:

@@ -10,6 +10,41 @@ class BatteryInfoParser:
         pass
 
     @staticmethod
+    def _parse_hardware_info(content: str) -> dict[str, int] | None:
+        """
+        Parse hardware information from the given content.
+        :param content: Battery info content.
+        :return:
+        """
+        hardware_info = {}
+
+        try:
+            block_pattern = re.compile(
+                r"^DUMP OF SERVICE android\.hardware\.health\.IHealth/default:\s*\n"
+                r"(.*?)(?=^getHealthInfo -> HealthInfo\{)", re.M | re.S
+            )
+            block_match = re.search(pattern=block_pattern, string=content)
+            if not block_match:
+                return None
+
+            target_block = block_match.group(1)
+            cycle_match = re.search(pattern=r"cycle count:\s*(\d+)", string=target_block)
+            if cycle_match:
+                hardware_info["cycle_count"] = int(float(cycle_match.group(1)))
+
+            capacity_match = re.search(pattern=r"Full charge:\s*(\d+)", string=target_block)
+            if capacity_match:
+                hardware_info["hardware_capacity"] = int(float(capacity_match.group(1)) / 1000)
+
+            design_cap = re.search(pattern=r"batteryFullChargeDesignCapacityUah:\s*(\d+)", string=content)
+            if design_cap:
+                hardware_info["design_capacity"] = int(float(design_cap.group(1)) / 1000)
+
+            return hardware_info
+        except re.error:
+            return None
+
+    @staticmethod
     def _parse_battery_cap(cap_name: str, content: str) -> int | None:
         """
         Parse battery capacity from the given contents.
@@ -46,9 +81,11 @@ class BatteryInfoParser:
 
             device_info["nickname"] = details.group(1)
 
-            raw_system_version = details.group(2)
-            system_version = f"OS1.{raw_system_version.split(".", 1)[1]}" if raw_system_version.startswith(
-                "V816") else raw_system_version
+            raw_system_version: str = details.group(2)
+            system_version = (
+                f"OS1.{raw_system_version.split(".", 1)[1]}"
+                if raw_system_version.startswith("V816") else raw_system_version
+            )
             device_info["system_version"] = system_version
 
             return device_info
@@ -87,13 +124,16 @@ class BatteryInfoParser:
         battery_capacities = {}
 
         for cap_type in capacity_types:
-            battery_capacities[database_field_name[cap_type]] = self._parse_battery_cap(cap_name=cap_type, content=cont)
+            cap_data = self._parse_battery_cap(cap_name=cap_type, content=cont)
+            if cap_data:
+                battery_capacities[database_field_name[cap_type]] = cap_data
 
-        device_info = self._parse_device_info(content=cont)
-        parsed_data = {
-            "log_capture_time": log_capture_time, **battery_capacities, **device_info
-        }
+        device_info = self._parse_device_info(content=cont) or {}
+        hardware_info = self._parse_hardware_info(content=cont) or {}
 
+        parsed_data = {"log_capture_time": log_capture_time, **battery_capacities, **device_info, **hardware_info}
+
+        # Check required fields (all TABLE_AR_FIELDS are now required)
         if any(parsed_data.get(field) is None for field in TABLE_AR_FIELDS):
             return None
 

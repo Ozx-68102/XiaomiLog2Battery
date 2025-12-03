@@ -16,7 +16,7 @@ class BatteryDataService:
             raise ValueError(f"Missed fields: {", ".join(missed_fields)}")
 
         type_error = []
-        numeric_fields = [field for field in self.required_fields if "battery_capacity" in field]
+        numeric_fields = [field for field in self.required_fields if "battery_capacity" in field or field in ["cycle_count", "hardware_capacity"]]
         for field in numeric_fields:
             if not isinstance(data[field], int):
                 type_error.append(field)

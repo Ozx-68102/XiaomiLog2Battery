@@ -76,6 +76,21 @@ def store_data(data: list[dict[str, str | int]], mode: str = "init") -> bool:
     return status
 
 
+def get_max_cycle_count() -> str:
+    """
+    Get the maximum cycle count from database.
+    :return: Maximum cycle count as string, or "N/A" if no data.
+    """
+    battery_data = _data_service.get_all_battery_data()
+    if not battery_data:
+        return "N/A"
+
+    cycle_counts = [item.get("cycle_count") for item in battery_data if item.get("cycle_count") is not None]
+    if cycle_counts:
+        return str(max(cycle_counts))
+    return "N/A"
+
+
 def viz_battery_data() -> tuple[html.Div | None, int]:
     print("Start to visualize battery data.")
     battery_data = _data_service.get_all_battery_data()
@@ -95,7 +110,25 @@ def viz_battery_data() -> tuple[html.Div | None, int]:
         health_chart = html.Div()
 
     print(f"Done with visualizing {graph_count} graph(s).")
-    return html.Div([changing_chart, health_chart], style={"display": "flex"}), graph_count
+
+    # Create responsive layout with dbc
+    import dash_bootstrap_components as dbc
+
+    if graph_count == 1:
+        # Only changing chart
+        return dbc.Container([
+            dbc.Row([
+                dbc.Col(changing_chart, width=12)
+            ])
+        ], fluid=True), graph_count
+    else:
+        # Both charts with responsive layout
+        return dbc.Container([
+            dbc.Row([
+                dbc.Col(changing_chart, md=12, lg=6, className="mb-4"),
+                dbc.Col(health_chart, md=12, lg=6, className="mb-4")
+            ])
+        ], fluid=True), graph_count
 
 
 if __name__ == "__main__":

@@ -1,6 +1,3 @@
-import json
-import os
-
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -11,7 +8,6 @@ from Modules.Database import TABLE_AR_FIELDS
 
 class PlotlyVisualizer:
     def __init__(self):
-        self.model_caps = self._load_standard_caps()
         self.data_service = BatteryDataService()
 
         self.capacity_fields = [field for field in TABLE_AR_FIELDS if "battery_capacity" in field]
@@ -19,20 +15,6 @@ class PlotlyVisualizer:
         # reasonable capacity range
         self.min_valid_cap = 1000
         self.max_valid_cap = 15000  # Remember to maintenance
-
-    @staticmethod
-    def _load_standard_caps() -> dict[str, dict[str, int] | int]:
-        if hasattr(PlotlyVisualizer, "_cached_standard_caps"):
-            return PlotlyVisualizer._cached_standard_caps
-
-        json_path = os.path.join(os.path.dirname(__file__), "XiaomiBatteryCapacities_Android13Plus.json")
-        if not os.path.exists(json_path):
-            raise FileNotFoundError(f"Cannot find the json file: {os.path.basename(json_path)}.")
-
-        with open(file=json_path, mode="r", encoding="utf-8") as json_file:
-            PlotlyVisualizer._cached_standard_caps = json.load(json_file)
-
-        return PlotlyVisualizer._cached_standard_caps
 
     def _preprocess_data(self, raw_data: list[dict[str, str | int]]) -> pd.DataFrame:
         if not raw_data:
@@ -54,14 +36,18 @@ class PlotlyVisualizer:
 
     def gen_battery_changing_chart(self, data: list[dict[str, str | int]]) -> go.Figure:
         """
-        Generate a line/scatter chart of the battery capacity change.
+        Generate a line/scatter chart of the battery capacity change and hardware info.
         :param data: Battery data.
         """
         df = self._preprocess_data(data)
         model = df.loc[:, "nickname"].iloc[0]
 
         # Calculate the overall average battery capacity across all data points
-        overall_avg_capacity = df[self.capacity_fields].mean().mean()
+        # Exclude estimated_battery_capacity but include hardware_capacity if available
+        avg_fields = [field for field in self.capacity_fields if field != "estimated_battery_capacity"]
+        if "hardware_capacity" in df.columns:
+            avg_fields.append("hardware_capacity")
+        overall_avg_capacity = df[avg_fields].mean().mean()
         # Create a column with the same constant value for all rows
         df["avg_battery_capacity"] = overall_avg_capacity
 
@@ -95,6 +81,34 @@ class PlotlyVisualizer:
                 ),
                 row=1, col=1
             )
+
+        # Add hardware capacity if available (but not cycle count as it always increases)
+        if "hardware_capacity" in df.columns and df["hardware_capacity"].notna().any():
+            hardware_data = df[df["hardware_capacity"].notna()].copy()
+            if len(hardware_data) == 1:
+                fig.add_trace(
+                    go.Scatter(
+                        x=hardware_data["log_capture_time"],
+                        y=hardware_data["hardware_capacity"],
+                        name="Hardware Capacity",
+                        mode="markers",
+                        marker={"symbol": "circle", "size": 8, "color": "#8FBC8F"},
+                        showlegend=True
+                    ),
+                    row=1, col=1
+                )
+            else:
+                fig.add_trace(
+                    go.Scatter(
+                        x=hardware_data["log_capture_time"],
+                        y=hardware_data["hardware_capacity"],
+                        name="Hardware Capacity",
+                        mode="lines",
+                        line={"width": 3, "color": "#8FBC8F", "shape": "spline"},
+                        showlegend=True
+                    ),
+                    row=1, col=1
+                )
 
         fig.add_trace(
             go.Scatter(
@@ -131,12 +145,11 @@ class PlotlyVisualizer:
         current_avg_cap = lastest_10df.loc[:, "single_composite_capacity"].mean()
         current_avg_cap = round(current_avg_cap, 0)
 
-        model_standard_cap = self.model_caps.get(model)
-        if not model_standard_cap:
-            raise ValueError(f"Cannot find standard capacity of model '{model}'.")
+        if "design_capacity" not in df.columns and not df["design_capacity"].notna().any():
+            raise ValueError(f"Cannot find design capacity for model '{model}'. Please ensure hardware data is parsed correctly.")
 
-        if isinstance(model_standard_cap, dict):
-            model_standard_cap = next(iter(model_standard_cap.values()))  # TODO: Extent functions here in the future
+        # Use design_capacity from the data if available
+        model_standard_cap = df["design_capacity"].dropna().iloc[0]  # Use the first available design capacity
 
         health_percent = round((current_avg_cap / model_standard_cap) * 100, 2)
         health_percent = 0 if health_percent < 0 else health_percent
