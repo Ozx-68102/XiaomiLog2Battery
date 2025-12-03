@@ -1,6 +1,7 @@
 import os
 from typing import Literal
 
+import dash_bootstrap_components as dbc
 from dash import html, dcc
 
 from Modules.DataAnalysis import BatteryInfoParser, BatteryDataService, PlotlyVisualizer
@@ -91,7 +92,7 @@ def get_max_cycle_count() -> str:
     return "N/A"
 
 
-def viz_battery_data() -> tuple[html.Div | None, int]:
+def viz_battery_data() -> tuple[dbc.Container | None, int]:
     print("Start to visualize battery data.")
     battery_data = _data_service.get_all_battery_data()
     if not battery_data:
@@ -111,14 +112,12 @@ def viz_battery_data() -> tuple[html.Div | None, int]:
 
     print(f"Done with visualizing {graph_count} graph(s).")
 
-    # Create responsive layout with dbc
-    import dash_bootstrap_components as dbc
-
     if graph_count == 1:
         # Only changing chart
         return dbc.Container([
             dbc.Row([
-                dbc.Col(changing_chart, width=12)
+                dbc.Col(changing_chart, width=12),
+                health_chart
             ])
         ], fluid=True), graph_count
     else:
