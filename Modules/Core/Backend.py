@@ -1,16 +1,25 @@
 from dash import html, dcc
 
 from Modules.DataAnalysis import BatteryInfoParser, BatteryDataService, PlotlyVisualizer
-from Modules.FileProcess import BatteryLogProcessor
+from Modules.FileProcess import BatteryLogProcessor, FolderOperator, TXT_PATH
 
 _log_processor = BatteryLogProcessor()
 _info_parser = BatteryInfoParser()
 _data_service = BatteryDataService()
 _visualizer = PlotlyVisualizer()
+_folder_operator = FolderOperator()
 
 
 def parse_files(filepath_list: list[str]) -> list[dict[str, str | int]]:
     print(f"Start to process {len(filepath_list)} zip file(s).")
+
+    # Clear all previously extracted files before processing new uploads
+    try:
+        _folder_operator.reset_dir(path=TXT_PATH)
+        print("Cleared all previously extracted files.")
+    except Exception as e:
+        print(f"Warning: Failed to clear extracted files: {e}")
+
     txt_list = _log_processor.process_xiaomi_log(fps=filepath_list)
     print(f"Done with {len(txt_list)} txt file(s).")
 

@@ -44,8 +44,9 @@ def check_and_install_packages() -> None:
         "dash-uploader": {"ver": "0.7.0a2+fix2", "path": whl_path},
         "pandas": None,
         "plotly": None,
-        "dash": None,
-        "dash-bootstrap-components": None,
+        "dash": "3.3.0",
+        "waitress": "3.0.2",
+        "dash-bootstrap-components": "2.0.4",
         "werkzeug": "3.1.3" # 3.1.4 import a bug that cause UPLOADED FILE ERROR
     }
 

@@ -2,6 +2,7 @@ import os
 import shutil
 
 INSTANCE_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "instance")
+TXT_PATH = os.path.join(INSTANCE_PATH, "extracted_txt")
 
 class FolderOperator:
     @staticmethod

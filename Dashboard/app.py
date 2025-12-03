@@ -21,7 +21,7 @@ app.layout = dbc.Container([
     components.create_mode_info(),
     components.create_mode_selector(),
     components.create_upload_component(
-        max_files=40, filetype=[".zip"], complete_message="Upload Accomplished", only_message=True
+        max_files=40, filetype=[".zip"], complete_message="Upload Accomplished !", only_message=True
     ),
     *components.create_status_zones(),
     components.create_graph_zone()
@@ -56,7 +56,10 @@ def manage_interaction_state(
         is_processing = True
 
         pipeline_states = [parsed_data, viz_trigger, viz_res]
-        if any(state.get("status", components.ProcessStatus.INIT) == components.ProcessStatus.ERROR for state in pipeline_states):
+        if any(
+                state.get("status", components.ProcessStatus.INIT) == components.ProcessStatus.ERROR
+                for state in pipeline_states
+        ):
             is_processing = False
 
         if viz_res.get("status", components.ProcessStatus.INIT) == components.ProcessStatus.SUCCESS:
