@@ -15,10 +15,10 @@ def decompress(source: str, target: str, step: int) -> str | None:
     :param step: 0 -> find inner zip, 1 -> find txt
     :return: Filename if found, None otherwise.
     :raise zipfile.BadZipFile: If zip file cannot be decompressed.
-    :raise ValueError: Invalid mode.
+    :raise ValueError: Invalid step count.
     """
     if step not in [0, 1]:
-        raise ValueError("Invalid mode. It must be 0 or 1.")
+        raise ValueError("Invalid step count. It must be 0 or 1.")
 
     with zipfile.ZipFile(file=source, mode="r") as zf:
         for name in zf.namelist():
