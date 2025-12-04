@@ -37,11 +37,11 @@ def check_and_install_packages() -> None:
     # Calculate the path to the libs folder
     # Structure: Root/Modules/Core/PackageCheckers.py -> Need to go up 3 levels
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    whl_path = os.path.join(base_dir, "libs", "dash_uploader-0.7.0a2+fix2-py3-none-any.whl")
+    whl_path = os.path.join(base_dir, "libs", "dash_uploader-0.7.0a2+fix3-py3-none-any.whl")
 
     required_packages = {
         # Use a tuple or dict to specify version and local path
-        "dash-uploader": {"ver": "0.7.0a2+fix2", "path": whl_path},
+        "dash-uploader": {"ver": "0.7.0a2+fix3", "path": whl_path},
         "pandas": None,
         "plotly": None,
         "dash": "3.3.0",

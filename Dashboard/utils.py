@@ -1,5 +1,6 @@
 import os
 from typing import Literal
+from uuid import uuid4
 
 import dash_bootstrap_components as dbc
 from dash import html
@@ -11,11 +12,15 @@ def format_status_prompt(
         color: Literal["info", "warning", "danger", "success"] = "info",
         dismissable: bool | None = None
 ) -> dbc.Alert:
-    return dbc.Alert([
+    return dbc.Alert(
+        [
         dbc.Row(html.H4(title)),
         dbc.Row(html.Hr()),
         dbc.Row(html.Div(msg))
-    ], color=color, dismissable=dismissable)
+        ],
+        key=str(uuid4()),  # make Dash render a new alert instead of reusing old one
+        color=color, dismissable=dismissable
+    )
 
 
 def upload_status_prompt(

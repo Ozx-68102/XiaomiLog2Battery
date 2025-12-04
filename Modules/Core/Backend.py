@@ -24,13 +24,13 @@ def _calculate_workers(mode: Literal["low", "balanced", "high"], file_count: int
     """
     cpu_count = os.cpu_count() or 1
     if mode == "low":
-        # Low mode: min(cpu_count // 2, file_count, 4)
+        # Low mode
         return min(max(cpu_count // 2, 1), file_count, 4)
     elif mode == "balanced":
-        # Balanced mode: min(int(cpu_count * 0.75), file_count, 6)
+        # Balanced mode
         return min(max(int(cpu_count * 0.75), 1), file_count, 6)
     elif mode == "high":
-        # High mode: min(cpu_count, file_count, 8) - original logic
+        # High mode
         return min(cpu_count, file_count, 8)
 
     raise ValueError("Invalid mode.")
@@ -87,9 +87,16 @@ def get_max_cycle_count() -> str:
         return "N/A"
 
     cycle_counts = [item.get("cycle_count") for item in battery_data if item.get("cycle_count") is not None]
-    if cycle_counts:
-        return str(max(cycle_counts))
-    return "N/A"
+    return str(max(cycle_counts)) if cycle_counts else "N/A"
+
+
+def clear_upload_folder(fp: str) -> None:
+    """
+    Clear upload folder before uploading.
+    :param fp: upload folder path.
+    """
+    _folder_operator.reset_dir(path=fp)
+
 
 
 def viz_battery_data() -> tuple[dbc.Container | None, int]:

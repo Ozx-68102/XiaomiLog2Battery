@@ -7,8 +7,10 @@ import dash_uploader as du
 from dash import html, Output, Input, State, no_update, NoUpdate
 
 from Dashboard import components, utils
-from Modules.Core import parse_files, store_data, viz_battery_data, get_max_cycle_count
+from Modules.Core import parse_files, store_data, viz_battery_data, get_max_cycle_count, clear_upload_folder
 from Modules.FileProcess import INSTANCE_PATH
+
+__UPLOAD_FOLDER = "upload"
 
 basepath = os.path.dirname(os.path.abspath(__file__))
 app = dash.Dash(__name__, assets_folder=os.path.join(basepath, "assets"))
@@ -25,7 +27,8 @@ app.layout = dbc.Container([
         max_files=40,
         filetype=[".zip"],
         complete_message="Upload Accomplished! You can continue to upload by dragging files or clicking me",
-        only_show_message=True
+        only_show_message=True,
+        upload_id=__UPLOAD_FOLDER
     ),
     *components.create_status_zones(),
     components.create_cycle_count_alert(),
@@ -112,11 +115,15 @@ def update_thread_count(selected_count: str) -> str:
         Output(component_id="parse-status", component_property="children", allow_duplicate=True),
         Output(component_id="viz-status", component_property="children", allow_duplicate=True)
     ],
-    Input(component_id="upload-component", component_property="isUploading"),
+    [
+        Input(component_id="upload-component", component_property="isUploading"),
+        Input(component_id="upload-component", component_property="isCancelled")
+    ],
     prevent_initial_call=True
 )
 def on_upload_start(
-        is_uploading: bool
+        is_uploading: bool,
+        is_cancelled: bool
 ) -> tuple[
     dict[str, str | list[str]] | NoUpdate,
     dict[str, str] | NoUpdate,
@@ -127,22 +134,30 @@ def on_upload_start(
     html.Div | NoUpdate,
     html.Div | NoUpdate
 ]:
-    if is_uploading:
-        reset_data = {"status": components.ProcessStatus.INIT}
-        reset_parsed_data = {"status": components.ProcessStatus.INIT, "value": []}
-        reset_upload = {"status": components.ProcessStatus.INIT, "filepath": []}
+    reset_data = {"status": components.ProcessStatus.INIT}
+    reset_parsed_data = {"status": components.ProcessStatus.INIT, "value": []}
+    reset_upload = {"status": components.ProcessStatus.INIT, "filepath": []}
+    empty_ui = html.Div()
+    prompt = None
 
-        upload_prompt = utils.format_status_prompt(
+    if is_uploading:
+        clear_upload_folder(fp=os.path.join(INSTANCE_PATH, __UPLOAD_FOLDER))
+        prompt = utils.format_status_prompt(
             title="Uploading...",
             msg=[html.P("Now files are uploading. It may take some time, so hang tight...")],
             color="info", dismissable=False
         )
+    elif is_cancelled:
+        prompt = utils.format_status_prompt(
+            title="Upload Cancelled",
+            msg=[html.P("File upload has been cancelled by user. All states have been reset.")],
+            color="warning", dismissable=True
+        )
 
-        empty_ui = html.Div()
+    return (
+        reset_upload, reset_data, reset_parsed_data, reset_data, reset_data, prompt, empty_ui, empty_ui
+    ) if prompt else (no_update,) * 8
 
-        return reset_upload, reset_data, reset_parsed_data, reset_data, reset_data, upload_prompt, empty_ui, empty_ui
-
-    return (no_update, ) * 8
 
 @du.callback(
     output=[
@@ -269,7 +284,15 @@ def store_handler(
     Input(component_id="viz-trigger", component_property="data"),
     prevent_initial_call=True
 )
-def viz_handler(trigger: dict[str, str]) -> tuple[dbc.Alert | html.Div | NoUpdate, dict[str, str] | NoUpdate, html.Div | NoUpdate, str | NoUpdate, dict[str, str] | NoUpdate]:
+def viz_handler(
+        trigger: dict[str, str]
+) -> tuple[
+    dbc.Alert | html.Div | NoUpdate,
+    dict[str, str] | NoUpdate,
+    html.Div | dbc.Container | NoUpdate,
+    str | NoUpdate,
+    dict[str, str] | NoUpdate
+]:
     status = trigger.get("status", components.ProcessStatus.INIT)
     if status == components.ProcessStatus.INIT or status == components.ProcessStatus.ERROR:
         return (no_update, ) * 5

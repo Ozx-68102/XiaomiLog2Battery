@@ -26,7 +26,7 @@ class FolderOperator:
         """
         self.__empty_path(path=path)
 
-        if not os.path.exists(path=path):
+        if not os.path.exists(path):
             raise FileNotFoundError(f"The path '{path}' does not exist.")
 
         shutil.rmtree(path=path)
