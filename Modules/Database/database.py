@@ -68,10 +68,30 @@ def save_data_iar(data: dict[str, str | int]) -> int | None:
         cur = conn.cursor()
         cur.execute(
             f"INSERT INTO analysis_results ({fields_str}) VALUES ({placeholders_str})",
-            [data[field] for field in TABLE_AR_FIELDS]
+            [data[fields] for fields in TABLE_AR_FIELDS]
         )
 
         return cur.lastrowid
+
+def save_many_iar(data: list[dict[str, str | int]]) -> int:
+    """
+    Inserts multiple rows of battery analysis results into the table **analysis_results**.
+    :param data: A list of dictionaries containing the following keys: **log_capture_time** (str),
+     **estimated_battery_capacity** (int), **last_learned_battery_capacity** (int),
+     **min_learned_battery_capacity** (int), **max_learned_battery_capacity** (int), **phone_brand** (str),
+     **nickname** (str), **system_version** (str), **cycle_count** (int), **hardware_capacity** (int).
+    """
+    with _get_connection() as conn:
+        fields_str = ", ".join(TABLE_AR_FIELDS)
+        placeholders_str = ", ".join(["?"] * len(TABLE_AR_FIELDS))
+
+        cur = conn.cursor()
+        cur.executemany(
+            f"INSERT INTO analysis_results ({fields_str}) VALUES ({placeholders_str})",
+            [[item[fields] for fields in TABLE_AR_FIELDS] for item in data]
+        ) # The executemany() method is used to insert multiple rows of data into the database at once.
+
+        return cur.rowcount
 
 
 def get_all_results_far() -> list[dict[str, str | int]]:

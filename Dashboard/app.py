@@ -28,7 +28,9 @@ app.layout = dbc.Container([
         filetype=[".zip"],
         complete_message="Upload Accomplished! You can continue to upload by dragging files or clicking me",
         only_show_message=True,
-        upload_id=__UPLOAD_FOLDER
+        upload_id=__UPLOAD_FOLDER,
+        max_size_mb=10 * 1024,
+        chunk_size_mb=30    # protect the hard disk
     ),
     *components.create_status_zones(),
     components.create_cycle_count_alert(),
@@ -258,7 +260,7 @@ def store_handler(
 
     try:
         result = store_data(data=parsed_data, mode=operation_mode)
-        if not result:
+        if result == 0:
             return utils.format_status_prompt(
                 title="Failed to store data", msg=[html.P("Database error.")], color="danger", dismissable=True
             ), {"status": components.ProcessStatus.ERROR}

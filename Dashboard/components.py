@@ -150,6 +150,8 @@ def create_upload_component(
         complete_message: str = "Uploaded: ",
         only_show_message: bool = False,
         upload_id: str = "upload",
+        max_size_mb: int = 5 * 1024,
+        chunk_size_mb: int = 1
 ) -> dbc.Row:
     """
     Create the upload component for the app.
@@ -160,12 +162,15 @@ def create_upload_component(
                 dbc.CardBody([
                     du.Upload(
                         id="upload-component",
-                        text=f"Drag files to here, or click it to select file(s). After that file(s) will be automatically uploaded. No more than {max_files} files.",
+                        text=(f"Drag files to here, or click it to select file(s). "
+                              f"After that file(s) will be automatically uploaded. No more than {max_files} files."),
                         text_completed=complete_message,
                         text_completed_no_suffix=only_show_message,
                         max_files=max_files,
                         filetypes=filetype,
                         upload_id=upload_id,
+                        max_total_size=max_size_mb,
+                        chunk_size=chunk_size_mb,
                         is_uploading=False,
                         default_style={
                             "width": "100%",
