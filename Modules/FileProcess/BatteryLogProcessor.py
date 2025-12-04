@@ -7,18 +7,26 @@ from concurrent.futures import ProcessPoolExecutor, Future
 from Modules.FileProcess.FolderOperator import FolderOperator, INSTANCE_PATH
 
 
-def decompress(source: str, target: str) -> list[str]:
+def decompress(source: str, target: str, step: int) -> str | None:
     """
     Decompress a zip file.
     :param source: Source path (include filename) .
-    :param target: Target path.
+    :param target: Target path (**not** include filename).
+    :param step: 0 -> find inner zip, 1 -> find txt
+    :return: Filename if found, None otherwise.
     :raise zipfile.BadZipFile: If zip file cannot be decompressed.
-    :return: A list of filenames in the decompressed zip file.
+    :raise ValueError: Invalid mode.
     """
+    if step not in [0, 1]:
+        raise ValueError("Invalid mode. It must be 0 or 1.")
 
-    with zipfile.ZipFile(file=source, mode="r") as zip_ref:
-        zip_ref.extractall(path=target)
-        return zip_ref.namelist()
+    with zipfile.ZipFile(file=source, mode="r") as zf:
+        for name in zf.namelist():
+            if name.startswith("bugreport") and name.endswith((".zip", ".txt")[step]):
+                zf.extract(name, target)
+                return name
+
+    return None
 
 
 class BatteryLogProcessor:
@@ -48,37 +56,17 @@ class BatteryLogProcessor:
             try:
                 # First we need to decompress nested zip file
                 current_path = fp
-                while True:
-                    decompressed_files = decompress(source=current_path, target=temp_dir)
+                step = 0
+                while step <= 1:
+                    decompressed_filename = decompress(source=current_path, target=temp_dir, step=step)
+                    if decompressed_filename is None:
+                        raise ValueError(f"Step {step}: No matching file found in {current_path}")
 
-                    nested_zip = None
-                    for decompressed_file in decompressed_files:
-                        de_filename = os.path.basename(decompressed_file)
-                        if de_filename.startswith("bugreport") and de_filename.endswith(".zip"):
-                            nested_zip = os.path.join(temp_dir, decompressed_file)
-                            break
+                    current_path = os.path.join(temp_dir, decompressed_filename)
+                    step += 1
 
-                    if not nested_zip:  # Exit loop
-                        break
-
-                    current_path = nested_zip
-
-                # Next we need to find out the specified txt file and move it
-                target_filepath = None
-                for root, _, files in os.walk(temp_dir):
-                    for file in files:
-                        if file.startswith("bugreport") and file.endswith(".txt"):
-                            target_filepath = os.path.join(root, file)
-                            break
-
-                    if target_filepath:
-                        break
-
-                if not target_filepath:
-                    raise ValueError("Decompression successfully but no valid file found.")
-
-                shutil.copy2(src=target_filepath, dst=self.final_path)
-                return os.path.join(self.final_path, os.path.basename(target_filepath))
+                shutil.copy2(src=current_path, dst=self.final_path)
+                return os.path.join(self.final_path, decompressed_filename)
             except Exception as e:
                 raise RuntimeError(f"Failed to process {os.path.basename(fp)}: {e}")
 
