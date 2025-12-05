@@ -171,7 +171,6 @@ def create_upload_component(
                         upload_id=upload_id,
                         max_total_size=max_size_mb,
                         chunk_size=chunk_size_mb,
-                        is_uploading=False,
                         default_style={
                             "width": "100%",
                             "height": "100%",
