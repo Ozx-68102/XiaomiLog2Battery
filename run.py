@@ -1,9 +1,10 @@
 import webbrowser
 from threading import Timer
 
-from waitress import serve
+from app import app
 
-from Dashboard import app
+
+# from waitress import serve
 
 
 def open_browser() -> None:
@@ -11,10 +12,12 @@ def open_browser() -> None:
 
 
 if __name__ == "__main__":
-    try:
-        print("Starting Server...")
-        Timer(0.5, open_browser).start()
-        serve(app.server, host="127.0.0.1", port=8050)
-    except Exception as e:
-        print("Server failed to start.")
-        raise e
+    Timer(0.5, open_browser).start()
+    app.run()
+    # try:
+    #     print("Starting Server...")
+    #     Timer(0.5, open_browser).start()
+    #     serve(app.server, host="127.0.0.1", port=8050)
+    # except Exception as e:
+    #     print("Server failed to start.")
+    #     raise e

@@ -2,10 +2,9 @@ import os
 from typing import Literal
 
 import dash_bootstrap_components as dbc
-from dash import html, dcc
-
 from Modules.DataAnalysis import BatteryInfoParser, BatteryDataService, PlotlyVisualizer
 from Modules.FileProcess import BatteryLogProcessor, FolderOperator, TXT_PATH
+from dash import html, dcc
 
 _log_processor = BatteryLogProcessor()
 _info_parser = BatteryInfoParser()

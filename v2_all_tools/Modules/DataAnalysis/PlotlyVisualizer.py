@@ -1,9 +1,8 @@
 import pandas as pd
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-
 from Modules.DataAnalysis import BatteryDataService
 from Modules.Database import TABLE_AR_FIELDS
+from plotly.subplots import make_subplots
 
 
 class PlotlyVisualizer:

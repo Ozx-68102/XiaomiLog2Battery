@@ -4,11 +4,10 @@ from typing import Literal
 import dash
 import dash_bootstrap_components as dbc
 import dash_uploader as du
-from dash import html, Output, Input, State, no_update, NoUpdate
-
 from Dashboard import components, utils
 from Modules.Core import parse_files, store_data, viz_battery_data, get_max_cycle_count, clear_upload_folder
 from Modules.FileProcess import INSTANCE_PATH
+from dash import html, Output, Input, State, no_update, NoUpdate
 
 __UPLOAD_FOLDER = "upload"
 
