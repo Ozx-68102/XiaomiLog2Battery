@@ -6,7 +6,7 @@ readme = "README.md"
 license = {text = "MIT"}
 license-files = ["LICENSE"]
 requires-python = ">=3.14"
-authors = {name = "Ozx-68102", email = "ozx1072960726@gmail.com"}
+authors = {name = "Zhixin Ou", email = "ozx1072960726@gmail.com"}
 dependencies = [
     "dash>=3.3.0",
     "dash-bootstrap-components>=2.0.4",
@@ -16,8 +16,3 @@ dependencies = [
 
 [project.urls]
 Repository = "https://github.com/Ozx-68102/XiaomiLog2Battery"
-
-[dependency-groups]
-dev = [
-    "cookiecutter>=2.6.0",
-]
