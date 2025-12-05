@@ -1,44 +1,23 @@
 [project]
-name = "xiaomi-log2battery"
-version = "3.0.0"
-description = "Xiaomi Battery Log Analyzer with Modern UI Architecture"
+name = "xiaomilog2battery"
+version = "3.0.0-alpha.1"
+description = "A program which analyzes battery capacity from logs of Xiaomi smartphones."
 readme = "README.md"
 license = {text = "MIT"}
+license-files = ["LICENSE"]
 requires-python = ">=3.14"
-authors = [
-    {name = "Ozx-68102", email = "ozx-68102@example.com"}
-]
-keywords = ["xiaomi", "battery", "analyzer", "dashboard", "log-analysis", "free-threading"]
-classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3.14",
-    "Topic :: Scientific/Engineering :: Information Analysis",
-    "Topic :: System :: Monitoring",
-    "Topic :: Utilities",
-]
+authors = {name = "Ozx-68102", email = "ozx1072960726@gmail.com"}
 dependencies = [
     "dash>=3.3.0",
     "dash-bootstrap-components>=2.0.4",
     "pandas>=2.3.3",
-    "plotly>=6.5.0",
     "waitress>=3.0.2",
-    # Note: dash_uploader removed for custom Uppy+React+TypeScript implementation
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.hatch.metadata]
-allow-direct-references = true
+[project.urls]
+Repository = "https://github.com/Ozx-68102/XiaomiLog2Battery"
 
 [dependency-groups]
 dev = [
-    "pytest>=7.0.0",
-    "black>=23.0.0",
-    "isort>=5.12.0",
-    "flake8>=6.0.0",
-    "mypy>=1.0.0",
+    "cookiecutter>=2.6.0",
 ]
