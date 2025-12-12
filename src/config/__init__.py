@@ -4,11 +4,18 @@ INSTANCE_PATH = Path(__file__).parents[2] / "instance"
 TXT_PATH = INSTANCE_PATH / "extracted_txt"
 DB_PATH = INSTANCE_PATH / "database.db"
 
+CAPACITY_MAPPING = {
+    "Estimated battery capacity": "estimated_battery_capacity",
+    "Last learned battery capacity": "last_learned_battery_capacity",
+    "Min learned battery capacity": "min_learned_battery_capacity",
+    "Max learned battery capacity": "max_learned_battery_capacity"
+}
+CAPACITY_TYPES = list(CAPACITY_MAPPING.values())
+
 NUMERIC_FIELDS = [
-    "estimated_battery_capacity", "last_learned_battery_capacity",
-    "min_learned_battery_capacity", "max_learned_battery_capacity",
     "cycle_count", "hardware_capacity"
 ]
+NUMERIC_FIELDS.extend(CAPACITY_TYPES)
 
 TABLE_FIELDS = [
     "log_capture_time", "phone_brand", "nickname",

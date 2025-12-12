@@ -75,9 +75,8 @@ class BatteryProcessor:
         if not path.is_file():
             raise ValueError(f"Variable '{fp}' is not a valid file.")
 
-        name = path.name
-        if not name.startswith("bugreport") or not name.endswith(".zip"):
-            raise ValueError(f"'{name}' not a valid Xiaomi zip file.")
+        if not path.stem.startswith("bugreport") or path.suffix != ".zip":
+            raise ValueError(f"'{path.name}' not a valid Xiaomi zip file.")
 
         with tempfile.TemporaryDirectory(dir=self.top_temp, prefix="temp-") as td:
             temp_path = Path(td)
@@ -129,7 +128,7 @@ class BatteryProcessor:
         workers = min(len(fps), thread_count)
 
         with ProcessPoolExecutor(max_workers=workers) as executor:
-            futures: list[Future] = [executor.submit(self._extract_single_log, file) for file in fps]
+            futures: list[Future[Path]] = [executor.submit(self._extract_single_log, file) for file in fps]
 
             for future in futures:
                 try:
