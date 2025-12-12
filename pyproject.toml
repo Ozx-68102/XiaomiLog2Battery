@@ -3,13 +3,14 @@ name = "xiaomilog2battery"
 version = "3.0.0-alpha.1"
 description = "A program which analyzes battery capacity from logs of Xiaomi smartphones."
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.14"
 authors = {name = "Zhixin Ou", email = "ozx1072960726@gmail.com"}
 dependencies = [
     "dash>=3.3.0",
     "dash-bootstrap-components>=2.0.4",
+    "dash-uploader-uppy5>=0.1.0",
     "pandas>=2.3.3",
     "waitress>=3.0.2",
 ]
