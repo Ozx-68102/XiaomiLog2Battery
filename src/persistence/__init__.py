@@ -1,0 +1,1 @@
+from .storage import init_table, save_data, get_all_results
