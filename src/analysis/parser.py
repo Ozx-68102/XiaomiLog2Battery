@@ -2,7 +2,7 @@ import re
 from concurrent.futures import ProcessPoolExecutor, Future
 from pathlib import Path
 
-from src import CAPACITY_MAPPING, CAPACITY_TYPES, TABLE_FIELDS
+from src.config import CAPACITY_MAPPING, CAPACITY_TYPES, TABLE_FIELDS
 
 
 class Parser:

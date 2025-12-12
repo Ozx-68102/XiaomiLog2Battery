@@ -1,6 +1,6 @@
 import sqlite3
 
-from src import DB_PATH, TABLE_FIELDS
+from src.config import DB_PATH, TABLE_FIELDS
 
 
 def _get_connection() -> sqlite3.Connection:

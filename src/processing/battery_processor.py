@@ -4,7 +4,7 @@ import zipfile
 from concurrent.futures import ProcessPoolExecutor, Future
 from pathlib import Path
 
-from src import INSTANCE_PATH, TXT_PATH
+from src.config import INSTANCE_PATH, TXT_PATH
 
 
 def decompress(source: str | Path, target: str | Path, step: int) -> str | None:

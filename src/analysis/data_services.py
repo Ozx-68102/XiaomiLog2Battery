@@ -1,4 +1,6 @@
-from src import init_table, save_data, get_all_results, NUMERIC_FIELDS, TABLE_FIELDS
+from src.config import NUMERIC_FIELDS, TABLE_FIELDS
+from src.persistence import init_table, save_data, get_all_results
+
 
 class DataServices:
     def __init__(self):
