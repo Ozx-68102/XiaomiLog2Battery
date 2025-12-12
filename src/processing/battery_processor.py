@@ -47,6 +47,10 @@ def decompress(source: str | Path, target: str | Path, step: int) -> str | None:
 class BatteryProcessor:
     def __init__(self) -> None:
         self.top_temp = INSTANCE_PATH / "temp"
+
+        if self.top_temp.exists():
+            shutil.rmtree(self.top_temp, ignore_errors=True)
+
         self.top_temp.mkdir(exist_ok=True)
 
         self.final_path = TXT_PATH
@@ -136,7 +140,6 @@ class BatteryProcessor:
                     print(e)
                     continue
 
-        shutil.rmtree(self.top_temp, ignore_errors=True)
         return final_paths
 
 
