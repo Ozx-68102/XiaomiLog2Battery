@@ -1,14 +1,22 @@
 import dash
-from dash import Dash, html, dcc
+import dash_bootstrap_components as dbc
+from dash import Dash, html
 
-app = Dash(__name__, use_pages=True)
+app = Dash(__name__, use_pages=True, assets_folder="./assets")
 
 app.layout = html.Div([
-    html.H1("Multi-page app with Dash Pages"),
-    html.Div([
-        html.Div(
-            dcc.Link(f"{page["name"]} - {page['path']}", href=page["relative_path"])
-        ) for page in dash.page_registry.values()
-    ]),
-    dash.page_container
+    dbc.NavbarSimple([
+        dbc.NavItem(dbc.NavLink(page["name"], href=page["relative_path"]))
+        for page in dash.page_registry.values()
+    ],
+        brand=html.Strong("XiaomiLog2Battery"),
+        brand_href="/",
+        color="primary",
+        dark=True
+    ),
+    dbc.Container(
+        dash.page_container,
+        fluid=True,
+        class_name="mt-4"
+    )
 ])
