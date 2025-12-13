@@ -2,13 +2,13 @@ import re
 from concurrent.futures import ProcessPoolExecutor, Future
 from pathlib import Path
 
-from src.config import CAPACITY_MAPPING, CAPACITY_TYPES, TABLE_FIELDS
+from src.config import BATTERY_CAPACITY_MAPPING, BATTERY_CAPACITY_TYPES, TABLE_FIELDS
 
 
 class Parser:
     def __init__(self):
-        self.cap_mapping = CAPACITY_MAPPING
-        self.cap_types = CAPACITY_TYPES
+        self.cap_mapping = BATTERY_CAPACITY_MAPPING
+        self.cap_types = BATTERY_CAPACITY_TYPES
         self.whole_fields = TABLE_FIELDS
 
     @staticmethod
