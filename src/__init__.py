@@ -3,5 +3,5 @@ from .config import (
     INSTANCE_PATH, TXT_PATH, DB_PATH, BATTERY_CAPACITY_MAPPING,
     BATTERY_CAPACITY_TYPES, NUMERIC_FIELDS, TABLE_FIELDS
 )
-from .persistence import AnalysisResults
+from .persistence import AnalysisResults, UploadRecord
 from .processing import BatteryProcessor

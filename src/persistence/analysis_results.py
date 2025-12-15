@@ -8,7 +8,7 @@ class AnalysisResults(BaseStorage):
     def init_table(self) -> None:
         """
         Use a series of SQL statements to initialize table called **analysis_results**.
-        If table exists, it will be dropped and recreated.
+        If table exists, its data will be overwritten (drop & create).
         """
 
         init_statement = """
@@ -41,6 +41,7 @@ class AnalysisResults(BaseStorage):
     def save_data(self, data: list[dict[str, str | int]]) -> int:
         """
         Insert rows of battery analysis results into the table **analysis_results**.
+
         Parameters
         ----------
         data: list[dict[str, str | int]]
@@ -87,4 +88,4 @@ class AnalysisResults(BaseStorage):
             cur.execute("SELECT * FROM analysis_results ORDER BY log_capture_time DESC")
             results = [dict(row) for row in cur.fetchall()]
 
-        return results if results else None
+        return results
