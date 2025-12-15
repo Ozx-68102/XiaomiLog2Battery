@@ -1,11 +1,12 @@
 from src.config import NUMERIC_FIELDS, TABLE_FIELDS
-from src.persistence import init_table, save_data, get_all_results
+from src.persistence import AnalysisResults
 
 
 class DataServices:
     def __init__(self):
         self.numeric_fields = NUMERIC_FIELDS
         self.whole_fields = TABLE_FIELDS
+        self.AR = AnalysisResults()
 
     def __validate_battery_data(self, data: dict[str, str | int]) -> None:
         missed_fields = [field for field in self.whole_fields if field not in data]
@@ -48,7 +49,7 @@ class DataServices:
 
     def _save_battery_data(self, data: list[dict[str, str | int]]) -> int:
         self._data_validator(data_list=data)
-        return save_data(data=data)
+        return self.AR.save_data(data=data)
 
     def init_battery_data(self, data: dict[str, str | int] | list[dict[str, str | int]]) -> int:
         """
@@ -75,7 +76,7 @@ class DataServices:
         if not data_list:
             raise ValueError("Data is empty.")
 
-        init_table()
+        self.AR.init_table()
         return self._save_battery_data(data=data_list)
 
     def append_battery_data(self, data: dict[str, str | int] | list[dict[str, str | int]]) -> int:
@@ -103,9 +104,8 @@ class DataServices:
 
         return self._save_battery_data(data=data_list)
 
-    @staticmethod
-    def get_all_battery_data() -> list[dict[str, str | int]] | None:
-        return get_all_results()
+    def get_all_battery_data(self) -> list[dict[str, str | int]] | None:
+        return self.AR.get_all_results()
 
 
 if __name__ == "__main__":
