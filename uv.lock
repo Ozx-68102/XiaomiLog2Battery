@@ -100,14 +100,14 @@ wheels = [
 
 [[package]]
 name = "dash-uploader-uppy5"
-version = "0.1.0"
+version = "0.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "dash" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/55/5e/1f3ddb7c9f433fc0b8cf3c2847b28b36795ee9e289fd247def5694d39ce1/dash_uploader_uppy5-0.1.0.tar.gz", hash = "sha256:53ee8fd8622d581d8d2fdd326a99fc7b84621cf4322a1034fd20b58c9b590fce", size = 86665, upload-time = "2025-12-12T06:58:55.148Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/57/cd/929ff231c7348b632ad48a307cab24c0ea1e28c6b65eacb7aa30c9f921a0/dash_uploader_uppy5-0.1.1.tar.gz", hash = "sha256:d1923ad8e53be94aa566687331fed5e3f9f38adfa0e9d52e38160da86121d8e0", size = 86924, upload-time = "2025-12-14T11:57:38.556Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/82/27/797bb941112b068331fa7ff3c17fa7a0a43ac35d4ca20deb00500d907743/dash_uploader_uppy5-0.1.0-py3-none-any.whl", hash = "sha256:d687adbdb127287eff03e98e5ead654f9a28f104ba855a86668318b57a1fd929", size = 87515, upload-time = "2025-12-12T06:58:53.381Z" },
+    { url = "https://files.pythonhosted.org/packages/fe/0c/4c45b21b652ed3fa72e69ac07e186fac7b08ceeeb797e466607c07127269/dash_uploader_uppy5-0.1.1-py3-none-any.whl", hash = "sha256:6ee006a974f31e94339457187286e0571f7732785cf7715bb460f0e6e408d247", size = 87644, upload-time = "2025-12-14T11:57:37.056Z" },
 ]
 
 [[package]]
@@ -423,7 +423,7 @@ dependencies = [
 requires-dist = [
     { name = "dash", specifier = ">=3.3.0" },
     { name = "dash-bootstrap-components", specifier = ">=2.0.4" },
-    { name = "dash-uploader-uppy5", specifier = ">=0.1.0" },
+    { name = "dash-uploader-uppy5", specifier = ">=0.1.1" },
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "waitress", specifier = ">=3.0.2" },
 ]
