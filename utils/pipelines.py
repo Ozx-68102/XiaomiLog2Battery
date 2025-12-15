@@ -7,10 +7,12 @@ def _calculate_workers(mode: Literal["low", "balanced", "high"], file_count: int
     if mode == "low":
         # Low mode
         return min(max(cpu_count // 2, 1), file_count, 4)
-    elif mode == "balanced":
+
+    if mode == "balanced":
         # Balanced mode
         return min(max(int(cpu_count * 0.75), 1), file_count, 6)
-    elif mode == "high":
+
+    if mode == "high":
         # High mode
         return min(cpu_count, file_count, 8)
 

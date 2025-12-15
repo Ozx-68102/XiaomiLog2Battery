@@ -1,20 +1,20 @@
 import dash
 import dash_bootstrap_components as dbc
 import dash_uploader_uppy5 as du
-from dash import html, Output, Input
+from dash import html, dcc, Output, Input, no_update, NoUpdate
 
 from utils import format_alert_content
 
 MAX_FILE_SIZE = 20 * 1024
 MAX_FILE_NUMBER = 100
 
-dash.register_page(__name__, path="/uploads")
+dash.register_page(__name__, path="/uploads", order=2)
 
 layout = [
     dbc.Row(
         dbc.Col(
             [
-                html.H2("Upload your Xiaomi log files"),
+                html.Strong("Upload Xiaomi log files"),
                 html.Br(),
                 du.Upload(
                     id="uploader",
@@ -30,13 +30,19 @@ layout = [
         justify="center",
     ),
     html.Br(),
-    dbc.Alert(
-        id="alert",
-        children=[],
-        color=None,
-        is_open=False,
-        dismissable=True,
-        fade=True
+    dbc.Row(
+        dbc.Col(
+            dbc.Alert(
+                id="alert",
+                children=[],
+                color=None,
+                is_open=False,
+                dismissable=True,
+                fade=True
+            ),
+            xs=12, md=10, lg=8, xl=6,
+        ),
+        justify="center",
     )
 ]
 
@@ -52,6 +58,38 @@ layout = [
     ],
     prevent_initial_call=True
 )
-def anonymous(uploaded_files: list[dict[str, str | int | dict[str, str | int]]], failed_files: list[dict[str, str]]):
-    output = f"uploaded: {uploaded_files} failed: {failed_files}"
-    return True, format_alert_content(title="Completed", content=output), "info"
+def upload_handler(
+        uploaded_files: list[dict[str, str | int | dict[str, str | int]]],
+        failed_files: list[dict[str, str]]
+) -> tuple[bool | NoUpdate, list[dbc.Row] | NoUpdate, str | NoUpdate]:
+    count_success = len(uploaded_files)
+    count_failed = len(failed_files)
+
+    if count_success == 0 and count_failed == 0:
+        return (no_update, ) * 3
+
+    if count_success > 0:
+        output = [
+            "Upload successful. You can click ",
+            dcc.Link("here", href="/processing", className="alert-link"),
+            " for the next step."
+        ]
+
+        if count_failed == 0:
+            return True, format_alert_content(title="INFO", content=output), "info"
+
+        output.extend([
+            html.Br(),
+            "But some errors occurred while uploading: ",
+            html.Ul([html.Li(f"Filename: {failed["name"]}, Error: {failed["error"]}") for failed in failed_files])
+        ])
+        return True, format_alert_content(title="INFO", content=output), "warning"
+
+    if count_failed > 0:
+        output = [
+            "Upload failed. Here are the errors, maybe you can try again later:",
+            html.Ul([html.Li(f"Filename: {failed["name"]}, Error: {failed["error"]}") for failed in failed_files])
+        ]
+        return True, format_alert_content(title="NOTE", content=output), "danger"
+
+    return (no_update, ) * 3

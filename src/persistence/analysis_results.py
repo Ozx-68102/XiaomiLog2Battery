@@ -1,10 +1,14 @@
 import sqlite3
 
-from src.config import TABLE_FIELDS
+from src.config import ANALYSIS_RESULTS_FIELDS
 from .connect import BaseStorage
 
 
 class AnalysisResults(BaseStorage):
+    def __init__(self) -> None:
+        super().__init__()
+        self.table_field = ANALYSIS_RESULTS_FIELDS
+
     def init_table(self) -> None:
         """
         Use a series of SQL statements to initialize table called **analysis_results**.
@@ -64,8 +68,8 @@ class AnalysisResults(BaseStorage):
             The number of rows inserted successfully.
         """
 
-        fields_str = ", ".join(TABLE_FIELDS)
-        placeholders_str = ", ".join(["?"] * len(TABLE_FIELDS))
+        fields_str = ", ".join(self.table_field)
+        placeholders_str = ", ".join(["?"] * len(self.table_field))
 
         counts = 0
 
@@ -73,7 +77,7 @@ class AnalysisResults(BaseStorage):
             cur = c.cursor()
             cur.executemany(
                 f"INSERT INTO analysis_results ({fields_str}) VALUES ({placeholders_str})",
-                [[item[fields] for fields in TABLE_FIELDS] for item in data]
+                [[item[fields] for fields in self.table_field] for item in data]
             )
 
             counts = cur.rowcount
