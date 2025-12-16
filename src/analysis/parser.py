@@ -2,13 +2,13 @@ import re
 from concurrent.futures import ProcessPoolExecutor, Future
 from pathlib import Path
 
-from src.config import BATTERY_CAPACITY_MAPPING, BATTERY_CAPACITY_TYPES, ANALYSIS_RESULTS_FIELDS
+from src.config import BATTERY_CAPACITY_MAPPING, BATTERY_CAPACITY_TYPES_IN_LOG, ANALYSIS_RESULTS_FIELDS
 
 
 class Parser:
     def __init__(self):
         self.cap_mapping = BATTERY_CAPACITY_MAPPING
-        self.cap_types = BATTERY_CAPACITY_TYPES
+        self.cap_types = BATTERY_CAPACITY_TYPES_IN_LOG
         self.whole_fields = ANALYSIS_RESULTS_FIELDS
 
     @staticmethod
@@ -129,7 +129,7 @@ class Parser:
     def _parse_info(self, path: str | Path) -> dict[str, str | int] | None:
         path = Path(path)
         filename = path.stem
-        if not filename.startswith("bugreport") or not path.suffix == ".txt":
+        if not filename.startswith("bugreport") or path.suffix != ".txt":
             return None
 
         cont = path.read_text(encoding="utf-8", errors="ignore")

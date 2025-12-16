@@ -5,6 +5,7 @@ BATTERY_CAPACITY_MAPPING = {
     "Max learned battery capacity": "max_learned_battery_capacity"
 }
 BATTERY_CAPACITY_TYPES = list(BATTERY_CAPACITY_MAPPING.values())
+BATTERY_CAPACITY_TYPES_IN_LOG = list(BATTERY_CAPACITY_MAPPING.keys())
 
 BATTERY_NUMERIC_FIELDS = [
     "cycle_count", "hardware_capacity"

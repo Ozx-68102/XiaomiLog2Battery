@@ -98,13 +98,13 @@ class BatteryProcessor:
             except Exception as e:
                 raise RuntimeError(f"Failed to process {path.name}: {e}")
 
-    def process_xiaomi_log(self, fps: list[str], thread_count: int) -> list[Path]:
+    def process_xiaomi_log(self, fps: list[str | Path], thread_count: int) -> list[Path]:
         """
         Process or extract one or more Xiaomi log files from zip files.
 
         Parameters
         ----------
-        fps: list[str]
+        fps: list[str | Path]
             A list of Xiaomi zip file paths.
         thread_count: int
             Number of worker threads/processes.

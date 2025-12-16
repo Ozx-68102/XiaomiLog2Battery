@@ -1,11 +1,19 @@
 import dash
 import dash_bootstrap_components as dbc
 import dash_uploader_uppy5 as du
-from dash import Dash, html
+import diskcache
+from dash import Dash, html, DiskcacheManager
 
-from src import UPLOAD_PATH
+from src import UPLOAD_PATH, DISKCACHE_PATH
 
-app = Dash(__name__, use_pages=True, assets_folder="./assets")
+cache = diskcache.Cache(str(DISKCACHE_PATH))
+app = Dash(
+    __name__,
+    use_pages=True,
+    assets_folder="./assets",
+    background_callback_manager=DiskcacheManager(cache)
+)
+
 du.configurator(app, folder=str(UPLOAD_PATH), use_upload_id=False)
 
 app.layout = html.Div([
