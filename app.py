@@ -3,10 +3,10 @@ import dash_bootstrap_components as dbc
 import dash_uploader_uppy5 as du
 from dash import Dash, html
 
-from src import INSTANCE_PATH
+from src import UPLOAD_PATH
 
 app = Dash(__name__, use_pages=True, assets_folder="./assets")
-du.configurator(app, folder=str(INSTANCE_PATH))
+du.configurator(app, folder=str(UPLOAD_PATH), use_upload_id=False)
 
 app.layout = html.Div([
     dbc.NavbarSimple([

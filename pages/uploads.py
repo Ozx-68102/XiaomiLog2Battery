@@ -22,7 +22,6 @@ layout = [
                     allowed_file_types=[".zip"],
                     max_total_file_size=20 * 1024,
                     max_number_of_files=100,
-                    upload_id="uploads",
                 )
             ],
             xs=12, md=10, lg=8, xl=6,
