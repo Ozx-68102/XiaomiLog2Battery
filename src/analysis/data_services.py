@@ -105,11 +105,14 @@ class DataServices:
 
         raise ValueError("Invalid table name.")
 
-    def get_all_battery_data(self, table: Table) -> list[dict[str, str | int]] | None:
+    def get_battery_data(self, table: Table, model: str | None = None) -> list[dict[str, str | int]] | None:
         if table == "analysis_results":
-            return self.AR.get_all_results()
+            return self.AR.get_results(model=model)
 
         raise ValueError("Invalid table name.")
+
+    def get_model(self) -> list[str] | None:
+        return self.AR.get_unique_model()
 
 
 if __name__ == "__main__":

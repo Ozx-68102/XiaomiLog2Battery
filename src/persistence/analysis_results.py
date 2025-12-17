@@ -84,12 +84,28 @@ class AnalysisResults(BaseStorage):
 
         return counts
 
-    def get_all_results(self) -> list[dict[str, str | int]] | None:
+    def get_unique_model(self) -> list[str] | None:
         results = None
         with self.conn as c:
             c.row_factory = sqlite3.Row
             cur = c.cursor()
-            cur.execute("SELECT * FROM analysis_results ORDER BY log_capture_time DESC")
+            cur.execute("SELECT DISTINCT nickname FROM analysis_results")
+            results = [row[0] for row in cur.fetchall()]
+
+        return results if results else None
+
+    def get_results(self, model: str | None = None) -> list[dict[str, str | int]] | None:
+        results = None
+
+        statements = "SELECT * FROM analysis_results"
+        if model:
+            statements += f" WHERE nickname = '{model}'"
+        statements += " ORDER BY log_capture_time DESC;"
+
+        with self.conn as c:
+            c.row_factory = sqlite3.Row
+            cur = c.cursor()
+            cur.execute(statements)
             results = [dict(row) for row in cur.fetchall()]
 
-        return results
+        return results if results else None

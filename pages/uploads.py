@@ -32,7 +32,7 @@ layout = [
     dbc.Row(
         dbc.Col(
             dbc.Alert(
-                id="alert",
+                id="upload-alert",
                 children=[],
                 color=None,
                 is_open=False,
@@ -47,9 +47,9 @@ layout = [
 
 @dash.callback(
     [
-        Output("alert", "is_open"),
-        Output("alert", "children"),
-        Output("alert", "color")
+        Output("upload-alert", "is_open"),
+        Output("upload-alert", "children"),
+        Output("upload-alert", "color")
     ],
     [
         Input("uploader", "uploadedFiles"),

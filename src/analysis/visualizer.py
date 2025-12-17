@@ -2,13 +2,11 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from src.analysis import DataServices
 from src.config import BATTERY_CAPACITY_TYPES
 
 
 class Visualizer:
     def __init__(self):
-        self.ds = DataServices()
         self.cap_fields = BATTERY_CAPACITY_TYPES + ["hardware_capacity"]
         self.avg_fields = [field for field in self.cap_fields if field != "estimated_battery_capacity"]
 
@@ -56,10 +54,8 @@ class Visualizer:
             "health_percent": health_percent
         }
 
-    def gen_battery_changing_chart(self, data: list[dict[str, str | int]]) -> go.Figure:
+    def gen_battery_changing_chart(self, model: str, data: list[dict[str, str | int]]) -> go.Figure:
         df = self._preprocess(raw=data)
-        model = str(df.loc[:, "nickname"].iloc[0])
-
         df["avg_battery_capacity"] = df[self.avg_fields].mean().mean()
 
         fig = make_subplots(
@@ -109,7 +105,7 @@ class Visualizer:
         )
 
         fig.update_layout(
-            height=600, width=800,
+            autosize=True,
             legend={"orientation": "h", "yanchor": "top", "y": 1.2, "xanchor": "center", "x": 0.5},
             xaxis={"tickangle": 30, "tickmode": "auto", "nticks": 10},
             yaxis={"range": [df[self.cap_fields].min() * 0.98, df[self.cap_fields].max() * 1.02]},
@@ -119,15 +115,13 @@ class Visualizer:
         return fig
 
     
-    def gen_battery_health_chart(self, data: list[dict[str, str | int]]) -> go.Figure:
+    def gen_battery_health_chart(self, model: str, data: list[dict[str, str | int]]) -> go.Figure:
         df = self._preprocess(raw=data)
-
-        model = str(df.loc[:, "nickname"].iloc[0])
         if "design_capacity" not in df.columns and not df["design_capacity"].notna().any():
             raise ValueError(f"Cannot find design capacity for model '{model}'. Please ensure hardware data is parsed correctly.")
 
         last_20df: pd.DataFrame = df.head(20).copy()  # noqa
-        last_20df.loc[:, "avg_cap"] = last_20df.loc[:, self.avg_fields].mean()
+        last_20df.loc[:, "avg_cap"] = last_20df.loc[:, self.avg_fields].mean(axis=1)
         avg_cap = float(last_20df.loc[:, "avg_cap"].mean())
         avg_cap = round(avg_cap, 2)
 
@@ -152,8 +146,7 @@ class Visualizer:
         )
 
         fig.update_layout(
-            height=500,
-            width=500,
+            autosize=True,
             title={
                 "text": f"Battery Health of {model}<br />Current Capacity: {int(avg_cap)} / {int(standard_cap)} mAh<br />Health: {health_data["health_percent"]}%",
                 "x": 0.5, "y": 0.5,

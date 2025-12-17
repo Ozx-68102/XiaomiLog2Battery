@@ -22,12 +22,12 @@ def get_store() -> list[dcc.Store]:
 def get_deletion_modal() -> dbc.Modal:
     return dbc.Modal([
         dbc.ModalHeader(dbc.ModalTitle("Confirm Deletion")),
-        dbc.ModalBody(id="deletion-modal-body"),
+        dbc.ModalBody(id="pro-deletion-modal-body"),
         dbc.ModalFooter([
-            dbc.Button("Cancel", id="deletion-modal-close-btn", class_name="ms-auto", n_clicks=0),
-            dbc.Button("Delete", id="deletion-modal-delete-btn", color="danger", class_name="ms-2", n_clicks=0),
+            dbc.Button("Cancel", id="pro-deletion-modal-close-btn", class_name="ms-auto", n_clicks=0),
+            dbc.Button("Delete", id="pro-deletion-modal-delete-btn", color="danger", class_name="ms-2", n_clicks=0),
         ]),
-    ], id="deletion-modal", is_open=False, backdrop="static")
+    ], id="pro-deletion-modal", is_open=False, backdrop="static")
 
 
 def get_table_body() -> list[html.Tr]:
@@ -148,7 +148,7 @@ def layout() -> list[Component]:
                 dbc.Row([
                     dbc.Col(
                         dbc.Alert(
-                            id="alert",
+                            id="pro-alert",
                             children=[],
                             color=None,
                             is_open=False,
@@ -223,20 +223,20 @@ dash.clientside_callback(
 
 @dash.callback(
     [
-        Output("deletion-modal", "is_open"),
-        Output("deletion-modal-body", "children"),
+        Output("pro-deletion-modal", "is_open"),
+        Output("pro-deletion-modal-body", "children"),
         Output("deletion-target-file", "data"),
 
         # Used only to warn users that no file has been selected
-        Output("alert", "is_open", allow_duplicate=True),
-        Output("alert", "children", allow_duplicate=True),
-        Output("alert", "color", allow_duplicate=True),
+        Output("pro-alert", "is_open", allow_duplicate=True),
+        Output("pro-alert", "children", allow_duplicate=True),
+        Output("pro-alert", "color", allow_duplicate=True),
     ],
     [
         Input({"type": "file-delete-btn", "index": ALL}, "n_clicks"),
         Input("bulk-delete-btn", "n_clicks"),
-        Input("deletion-modal-close-btn", "n_clicks"),
-        Input("deletion-modal-delete-btn", "n_clicks"),
+        Input("pro-deletion-modal-close-btn", "n_clicks"),
+        Input("pro-deletion-modal-delete-btn", "n_clicks"),
     ],
     [
         State({"type": "file-checkbox", "index": ALL}, "value"),
@@ -251,7 +251,7 @@ def toggle_deletion_modal(
 ) -> tuple[bool, html.Div, list[str], bool, list[dbc.Row], str]:
     triggered = ctx.triggered_id
 
-    if triggered in ["deletion-modal-close-btn", "deletion-modal-delete-btn"]:
+    if triggered in ["pro-deletion-modal-close-btn", "pro-deletion-modal-delete-btn"]:
         return False, no_update, no_update, no_update, no_update, no_update
 
     # if user click the deletion icon in file list
@@ -294,13 +294,13 @@ def toggle_deletion_modal(
 @dash.callback(
     [
         Output("file-list-body", "children"),
-        Output("alert", "is_open", allow_duplicate=True),
-        Output("alert", "children", allow_duplicate=True),
-        Output("alert", "color", allow_duplicate=True),
+        Output("pro-alert", "is_open", allow_duplicate=True),
+        Output("pro-alert", "children", allow_duplicate=True),
+        Output("pro-alert", "color", allow_duplicate=True),
         Output("select-all-checkbox", "disabled"),
         Output("select-all-checkbox", "value", allow_duplicate=True),
     ],
-    Input("deletion-modal-delete-btn", "n_clicks"),
+    Input("pro-deletion-modal-delete-btn", "n_clicks"),
     State("deletion-target-file", "data"),
     prevent_initial_call=True
 )
@@ -350,9 +350,9 @@ def confirm_deletion(
 
 @dash.callback(
     [
-        Output("alert", "is_open", allow_duplicate=True),
-        Output("alert", "children", allow_duplicate=True),
-        Output("alert", "color", allow_duplicate=True),
+        Output("pro-alert", "is_open", allow_duplicate=True),
+        Output("pro-alert", "children", allow_duplicate=True),
+        Output("pro-alert", "color", allow_duplicate=True),
         Output("progress-collapse", "is_open"),
     ],
     Input("start-process-btn", "n_clicks"),
@@ -386,8 +386,8 @@ def decompress_handler(
 
         if results["status"] == "success":
             return True, format_alert_content("Analysis Complete", results["message"]), "success", False
-        else:
-            return True, format_alert_content("Analysis Failed", results["message"]), "danger", False
+
+        return True, format_alert_content("Analysis Failed", results["message"]), "danger", False
 
     except Exception as e:
         return True, format_alert_content("Critical Error", f"An unexpected error occurred: {str(e)}"), "danger", False
