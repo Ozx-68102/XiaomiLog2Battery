@@ -15,7 +15,7 @@ dash.register_page(__name__, path="/processing", order=3)
 
 def get_store() -> list[dcc.Store]:
     return [
-        dcc.Store(id="deletion-target-file", data=None),
+        dcc.Store(id="deletion-target-file", data=[]),
     ]
 
 
@@ -42,13 +42,19 @@ def get_table_body() -> list[html.Tr]:
             "No zip files found. Please click ",
             dcc.Link("here", href="/uploads"),
             " to upload first."
-        ], colSpan=5, className="text-center text-muted")])]
+        ], colSpan=6, className="text-center text-muted")])]
 
     rows = []
     for i, filepath in enumerate(zips, start=1):
         stat = filepath.stat()
         file_size_mb = stat.st_size / (1024 ** 2)
         mod_time = datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+
+        checkbox = dbc.Checkbox(
+            id={"type": "file-checkbox", "index": filepath.name},
+            value=False,
+            class_name="align-middle",
+        )
 
         delete_btn = dbc.Button(
             html.I(className="bi bi-trash"),
@@ -60,6 +66,7 @@ def get_table_body() -> list[html.Tr]:
         )
 
         rows.append(html.Tr([
+            html.Td(checkbox, className="text-center"),
             html.Td(i),
             html.Td(filepath.name, className="fw-bold"),
             html.Td(f"{file_size_mb:.2f} MB"),
@@ -71,6 +78,10 @@ def get_table_body() -> list[html.Tr]:
 
 
 def layout() -> list[Component]:
+    has_file = False
+    if UPLOAD_PATH.exists():
+        has_file = any(UPLOAD_PATH.glob("*.zip"))
+
     return [
         get_deletion_modal(),
         *get_store(),
@@ -110,7 +121,14 @@ def layout() -> list[Component]:
                             "Start Processing"
                         ], id="start-process-btn", color="primary", class_name="w-100 fw-bold mt-2"),
                         width=3,
-                    )
+                    ),
+                    dbc.Col(
+                        dbc.Button([
+                            html.I(className="bi bi-trash3-fill me-2"),
+                            "Delete Selected"
+                        ], id="bulk-delete-btn", color="danger", outline=False, class_name="w-100 fw-bold mt-2"),
+                        width=3,
+                    ),
                 ]),
                 html.Br(),
                 dbc.Row([
@@ -152,6 +170,15 @@ def layout() -> list[Component]:
             dbc.CardBody(
                 dbc.Table([
                     html.Thead(html.Tr([
+                        html.Th(
+                            dbc.Checkbox(
+                                id="select-all-checkbox",
+                                value=False,
+                                disabled=not has_file,
+                                class_name="text-center",
+                            ),
+                            className="text-center",
+                        ),
                         html.Th("#", style={"width": "5%"}),
                         html.Th("Filename", style={"width": "40%"}),
                         html.Th("Size", style={"width": "15%"}),
@@ -165,36 +192,103 @@ def layout() -> list[Component]:
     ]
 
 
+dash.clientside_callback(
+    """
+    (selectAll, rowValues) => {
+        const ctx = dash_clientside.callback_context;
+        if (!ctx.triggered || ctx.triggered.length === 0) {
+            return [window.dash_clientside.no_update, window.dash_clientside.no_update];
+        }
+        
+        const triggerId = ctx.triggered[0].prop_id;
+        if (triggerId === "select-all-checkbox.value") {
+            return [selectAll, Array(rowValues.length).fill(selectAll)];
+        }
+        
+        const allChecked = rowValues.every(Boolean);
+        return [allChecked, window.dash_clientside.no_update];
+    }
+    """,
+    [
+        Output("select-all-checkbox", "value", allow_duplicate=True),
+        Output({"type": "file-checkbox", "index": ALL}, "value"),
+    ],
+    [
+        Input("select-all-checkbox", "value"),
+        Input({"type": "file-checkbox", "index": ALL}, "value"),
+    ],
+    prevent_initial_call=True
+)
+
+
 @dash.callback(
     [
         Output("deletion-modal", "is_open"),
         Output("deletion-modal-body", "children"),
-        Output("deletion-target-file", "data")
+        Output("deletion-target-file", "data"),
+
+        # Used only to warn users that no file has been selected
+        Output("alert", "is_open", allow_duplicate=True),
+        Output("alert", "children", allow_duplicate=True),
+        Output("alert", "color", allow_duplicate=True),
     ],
     [
         Input({"type": "file-delete-btn", "index": ALL}, "n_clicks"),
+        Input("bulk-delete-btn", "n_clicks"),
         Input("deletion-modal-close-btn", "n_clicks"),
         Input("deletion-modal-delete-btn", "n_clicks"),
     ],
+    [
+        State({"type": "file-checkbox", "index": ALL}, "value"),
+        State({"type": "file-checkbox", "index": ALL}, "id"),
+    ],
     prevent_initial_call=True
 )
-def toggle_deletion_modal(_1, _2, _3) -> tuple[bool, html.Div, str]:
+def toggle_deletion_modal(
+        _1, _2, _3, _4,
+        checkbox_values: list[bool],
+        checkbox_ids: list[dict[str, str]],
+) -> tuple[bool, html.Div, list[str], bool, list[dbc.Row], str]:
     triggered = ctx.triggered_id
+
+    if triggered in ["deletion-modal-close-btn", "deletion-modal-delete-btn"]:
+        return False, no_update, no_update, no_update, no_update, no_update
 
     # if user click the deletion icon in file list
     if isinstance(triggered, dict) and triggered.get("type") == "file-delete-btn":
         filename = triggered["index"]
         modal_content = html.Div([
             html.P("Are you sure you want to delete this file?", className="mb-2"),
-            html.Strong(filename, className="text-danger user-select-all"),
-            html.P("This action cannot be undone.", className="text-muted small mt-2")
+            html.Strong(filename, className="user-select-all"),
+            html.P("This action cannot be undone.", className="text-danger small mt-2")
         ])
-        return True, modal_content, filename
+        return True, modal_content, [filename], False, no_update, no_update
 
-    if triggered in ["deletion-modal-close-btn", "deletion-modal-delete-btn"]:
-        return False, no_update, no_update
+    # if user select checkbox and click the bulk delect button
+    if triggered == "bulk-delete-btn":
+        selected_files = [id_obj["index"] for val, id_obj in zip(checkbox_values, checkbox_ids) if val]
+        if not selected_files:
+            return False, no_update, no_update, True, format_alert_content(title="Error", content="Please select at least 1 file to delete."), "danger"
 
-    return (no_update, ) * 3
+        count = len(selected_files)
+        display_limit = 10
+        list_items = [html.Li(f) for f in selected_files[:display_limit]]
+
+        summary_text = f"Total: {count} files"
+        if count > display_limit:
+            remaining = count - display_limit
+            summary_text = f"...and {remaining} more files ({summary_text})."
+
+        modal_content = html.Div([
+            html.P("Are you sure you want to delete the following files?", className="mb-2"),
+            html.Ul(list_items, className="small text-muted p-2"),
+            html.P(summary_text),
+            html.P("WARNING", className="text-danger fw-bold"),
+            html.P("This action cannot be undone.", className="text-danger fw-bold mt-2")
+        ])
+        return True, modal_content, selected_files, False, no_update, no_update
+
+    return (no_update, ) * 6
 
 
 @dash.callback(
@@ -202,29 +296,55 @@ def toggle_deletion_modal(_1, _2, _3) -> tuple[bool, html.Div, str]:
         Output("file-list-body", "children"),
         Output("alert", "is_open", allow_duplicate=True),
         Output("alert", "children", allow_duplicate=True),
-        Output("alert", "color", allow_duplicate=True)
+        Output("alert", "color", allow_duplicate=True),
+        Output("select-all-checkbox", "disabled"),
+        Output("select-all-checkbox", "value", allow_duplicate=True),
     ],
     Input("deletion-modal-delete-btn", "n_clicks"),
     State("deletion-target-file", "data"),
     prevent_initial_call=True
 )
-def confirm_deletion(n_clicks: int, filename: str):
-    if not n_clicks or not filename:
-        return (no_update, ) * 4
+def confirm_deletion(
+        n_clicks: int,
+        filenames: list
+) -> tuple[list[html.Tr], bool, list[dbc.Row], str, bool, bool]:
+    if not n_clicks or not filenames:
+        return (no_update, ) * 6
 
-    target = UPLOAD_PATH / filename
+    deleted_count = 0
+    errors = {}
 
-    try:
-        if target.exists():
-            target.unlink()
-    except OSError:
-        pass
+    for name in filenames:
+        target = UPLOAD_PATH / name
+
+        try:
+            if target.exists():
+                target.unlink()
+                deleted_count += 1
+        except Exception as e:
+            errors[name] = str(e)
+
+    if errors:
+        msg = [
+            html.P(f"Deleted {deleted_count} files successfully."),
+            html.P(f"Failed to delete {len(errors)} files:", className="fw-bold"),
+            html.Ul([html.Li(f"Name: {i}, Error: {v}") for i, v in errors.items()])
+        ]
+        color = "warning"
+    else:
+        msg = f"Successfully deleted {deleted_count} files."
+        color = "success"
+
+    remaining_files = list(UPLOAD_PATH.glob("*.zip"))
+    is_empty = len(remaining_files) == 0
 
     return (
         get_table_body(),
         True,
-        format_alert_content(title="File Deleted", content=f"Successfully deleted '{filename}'."),
-        "success"
+        format_alert_content(title="File Deleted", content=msg),
+        color,
+        is_empty,
+        False
     )
 
 
@@ -243,6 +363,7 @@ def confirm_deletion(n_clicks: int, filename: str):
     background=True,
     running=[
         (Output("start-process-btn", "disabled"), True, False),
+        (Output("bulk-delete-btn", "disabled"), True, False),
         (Output("operation-mode-selector", "disabled"), True, False),
         (Output("thread-mode-selector", "disabled"), True, False),
         (Output("progress-collapse", "is_open"), True, False),

@@ -1,7 +1,7 @@
 import dash
 import dash_bootstrap_components as dbc
 import dash_uploader_uppy5 as du
-from dash import html, dcc, Output, Input, no_update, NoUpdate
+from dash import html, dcc, Output, Input, no_update
 
 from utils import format_alert_content
 
@@ -60,7 +60,7 @@ layout = [
 def upload_handler(
         uploaded_files: list[dict[str, str | int | dict[str, str | int]]],
         failed_files: list[dict[str, str]]
-) -> tuple[bool | NoUpdate, list[dbc.Row] | NoUpdate, str | NoUpdate]:
+) -> tuple[bool, list[dbc.Row], str]:
     count_success = len(uploaded_files)
     count_failed = len(failed_files)
 
