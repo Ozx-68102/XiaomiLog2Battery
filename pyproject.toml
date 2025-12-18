@@ -5,7 +5,7 @@ description = "A program which analyzes battery capacity from logs of Xiaomi sma
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
-requires-python = ">=3.13"
+requires-python = "==3.13.*"
 authors = {name = "Zhixin Ou", email = "ozx1072960726@gmail.com"}
 dependencies = [
     "dash[diskcache]>=3.3.0",

@@ -6,7 +6,7 @@ from dash.development.base_component import Component
 from src import DataServices, Visualizer
 from utils import format_alert_content
 
-dash.register_page(__name__, path="/graphs", order=4)
+dash.register_page(__name__, path="/graphs", order=4, name="Graphs")
 
 
 def layout() -> list[Component]:

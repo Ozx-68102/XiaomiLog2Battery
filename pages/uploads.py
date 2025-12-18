@@ -8,7 +8,7 @@ from utils import format_alert_content
 MAX_FILE_SIZE = 20 * 1024
 MAX_FILE_NUMBER = 100
 
-dash.register_page(__name__, path="/uploads", order=2)
+dash.register_page(__name__, path="/uploads", order=2, name="Uploads")
 
 layout = [
     dbc.Row(

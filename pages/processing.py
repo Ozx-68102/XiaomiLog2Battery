@@ -10,7 +10,7 @@ from components import ThreadMode
 from src import UPLOAD_PATH
 from utils import format_alert_content, analysis_pipeline
 
-dash.register_page(__name__, path="/processing", order=3)
+dash.register_page(__name__, path="/processing", order=3, name="Processing")
 
 
 def get_store() -> list[dcc.Store]:
