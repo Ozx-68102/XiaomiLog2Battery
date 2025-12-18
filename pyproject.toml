@@ -1,0 +1,20 @@
+[project]
+name = "xiaomilog2battery"
+version = "3.0.0"
+description = "A program which analyzes battery capacity from logs of Xiaomi smartphones."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = "==3.13.*"
+authors = [{ name = "Zhixin Ou", email = "ozx1072960726@gmail.com" }]
+dependencies = [
+    "dash[diskcache]>=3.3.0",
+    "dash-bootstrap-components>=2.0.4",
+    "dash-uploader-uppy5>=0.1.1",
+    "pandas>=2.3.3",
+    "waitress>=3.0.2",
+    "dash-ag-grid>=32.3.2",
+]
+
+[project.urls]
+Repository = "https://github.com/Ozx-68102/XiaomiLog2Battery"

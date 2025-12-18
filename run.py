@@ -3,7 +3,7 @@ from threading import Timer
 
 from waitress import serve
 
-from Dashboard import app
+from app import app
 
 
 def open_browser() -> None:
