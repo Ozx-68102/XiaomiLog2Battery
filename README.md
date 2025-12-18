@@ -4,7 +4,7 @@
 ![Dash](https://img.shields.io/badge/Framework-Dash_3.3.0+-00796B.svg)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 
-**XiaomiLog2Battery** is a professional tool designed to extract, analyze, and visualize battery health data from Xiaomi smartphone system logs (`bugreport`).
+**XiaomiLog2Battery** is a practical tool designed to extract, analyze, and visualize battery health data from Xiaomi smartphone system logs (`bugreport`).
 
 
 
