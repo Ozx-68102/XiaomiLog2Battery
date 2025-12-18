@@ -110,7 +110,7 @@ class Visualizer:
             autosize=True,
             legend={"orientation": "h", "yanchor": "top", "y": 1.2, "xanchor": "center", "x": 0.5},
             xaxis={"tickangle": 30, "tickmode": "auto", "nticks": 10},
-            yaxis={"range": [df[self.cap_fields].min() * 0.98, df[self.cap_fields].max() * 1.02]},
+            yaxis={"range": [df[self.cap_fields].min().min() * 0.98, df[self.cap_fields].max().max() * 1.02]},
             hovermode="x unified"
         )
 
@@ -119,7 +119,7 @@ class Visualizer:
     
     def gen_battery_health_chart(self, model: str, timezone: str, data: list[dict[str, str | int]]) -> go.Figure:
         df = self._preprocess(raw=data, target_timezone=timezone)
-        if "design_capacity" not in df.columns and not df["design_capacity"].notna().any():
+        if "design_capacity" not in df.columns or not df["design_capacity"].notna().any():
             raise ValueError(f"Cannot find design capacity for model '{model}'. Please ensure hardware data is parsed correctly.")
 
         last_20df: pd.DataFrame = df.head(20).copy()  # noqa

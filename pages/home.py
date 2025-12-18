@@ -89,7 +89,7 @@ layout = dbc.Container([
                 title="4. Detailed Report",
                 desc="Inspect row-level data including learned capacity, voltages, and cycle counts in a grid view.",
                 icon="bi-table",
-                href="/report",
+                href="/reports",
                 btn_text="View Data",
                 color="warning"
             )

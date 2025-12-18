@@ -99,13 +99,13 @@ class AnalysisResults(BaseStorage):
 
         statements = "SELECT * FROM analysis_results"
         if model:
-            statements += f" WHERE nickname = '{model}'"
+            statements += f" WHERE nickname = ?"
         statements += " ORDER BY log_capture_time DESC;"
 
         with self.conn as c:
             c.row_factory = sqlite3.Row
             cur = c.cursor()
-            cur.execute(statements)
+            cur.execute(statements, (model, ) if model else None)
             results = [dict(row) for row in cur.fetchall()]
 
         return results if results else None

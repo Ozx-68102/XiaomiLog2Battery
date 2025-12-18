@@ -10,7 +10,7 @@ dash.register_page(__name__, path="/graphs", order=4, name="Graphs")
 
 
 def layout() -> list[Component]:
-    model = DataServices().get_model()
+    model = DataServices().get_model() or []
     default_val = model[0] if model else None
     is_disabled = False if default_val else True
 

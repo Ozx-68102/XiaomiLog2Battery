@@ -108,6 +108,9 @@ class DataServices:
     def get_battery_data(self, table: Table, model: str | None = None, health_snapshots: bool = False) -> list[dict[str, str | int | float]] | None:
         if table == "analysis_results":
             results = self.AR.get_results(model=model)
+            if not results:
+                return None
+
             if health_snapshots:
                 for result in results:
                     hw_cap = result.get("hardware_capacity")

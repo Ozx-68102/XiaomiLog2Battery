@@ -26,7 +26,7 @@ def get_general_card(title: str, value: str | int, icon: str, color: str) -> dbc
 
 
 def layout():
-    models = DataServices().get_model()
+    models = DataServices().get_model() or []
     default_val = models[0] if models else None
 
     column_defs = [
