@@ -26,14 +26,20 @@ app.layout = html.Div([
                     href="javascript: void(0);",
                     class_name="me-0 fw-bold",
                 ),
-                dbc.Badge(
-                    id="navbar-timezone-displayer",
-                    color="light",
-                    text_color="dark",
-                    class_name="ms-3 border border-secondary small py-1 align-self-center",
+                dcc.Link(
+                    dbc.Badge(
+                        id="navbar-timezone-displayer",
+                        color="light",
+                        text_color="dark",
+                        class_name="border border-secondary small py-1",
+                    ),
+                    href="/settings",
+                    className="ms-3 align-self-center",
+                    style={"textDecoration": "none"},
+                    title="Click to change timezone setting",
                 ),
             ], className="d-flex"),
-            dbc.NavbarToggler(id="navbar-toggler", n_clicks=0, ),
+            dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
             dbc.Collapse(
                 dbc.Nav([
                     dbc.NavItem(dbc.NavLink(page["name"], href=page["relative_path"], external_link=False))

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from .database import *
+from .version import APP_VERSION
 
 INSTANCE_PATH = Path(__file__).parents[2] / "instance"
 INSTANCE_PATH.mkdir(exist_ok=True)

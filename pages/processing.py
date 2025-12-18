@@ -385,7 +385,14 @@ def decompress_handler(
         results = analysis_pipeline(mode=opt_mode, thread=thread, set_progress=set_progress)
 
         if results["status"] == "success":
-            return True, format_alert_content("Analysis Complete", results["message"]), "success", False
+            msg = [
+                results["message"] + "You can click ",
+                dcc.Link("here", href="/graphs"),
+                " to generate graphs, or click ",
+                dcc.Link("here", href="/reports"),
+                " to view your log data."
+            ]
+            return True, format_alert_content("Analysis Complete", msg), "success", False
 
         return True, format_alert_content("Analysis Failed", results["message"]), "danger", False
 
