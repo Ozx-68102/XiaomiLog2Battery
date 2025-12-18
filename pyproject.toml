@@ -13,6 +13,7 @@ dependencies = [
     "dash-uploader-uppy5>=0.1.1",
     "pandas>=2.3.3",
     "waitress>=3.0.2",
+    "dash-ag-grid>=32.3.2",
 ]
 
 [project.urls]

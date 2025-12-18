@@ -94,7 +94,7 @@ class AnalysisResults(BaseStorage):
 
         return results if results else None
 
-    def get_results(self, model: str | None = None) -> list[dict[str, str | int]] | None:
+    def get_results(self, model: str | None = None) -> list[dict[str, str | int | float]] | None:
         results = None
 
         statements = "SELECT * FROM analysis_results"

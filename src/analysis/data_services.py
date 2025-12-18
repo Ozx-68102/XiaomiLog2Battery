@@ -105,9 +105,17 @@ class DataServices:
 
         raise ValueError("Invalid table name.")
 
-    def get_battery_data(self, table: Table, model: str | None = None) -> list[dict[str, str | int]] | None:
+    def get_battery_data(self, table: Table, model: str | None = None, health_snapshots: bool = False) -> list[dict[str, str | int | float]] | None:
         if table == "analysis_results":
-            return self.AR.get_results(model=model)
+            results = self.AR.get_results(model=model)
+            if health_snapshots:
+                for result in results:
+                    hw_cap = result.get("hardware_capacity")
+                    design_cap = result.get("design_capacity")
+
+                    result["health_snapshots"] = round((hw_cap / design_cap) * 100, 2) if design_cap and design_cap > 0 else 0.00
+
+            return results
 
         raise ValueError("Invalid table name.")
 
