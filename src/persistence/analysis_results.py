@@ -20,7 +20,7 @@ class AnalysisResults(BaseStorage):
                          CREATE TABLE analysis_results
                          (
                              id                            INTEGER PRIMARY KEY AUTOINCREMENT,
-                             log_capture_time              TEXT    NOT NULL,
+                             log_capture_time              INTEGER NOT NULL,
                              estimated_battery_capacity    INTEGER NOT NULL,
                              last_learned_battery_capacity INTEGER NOT NULL,
                              min_learned_battery_capacity  INTEGER NOT NULL,
@@ -51,7 +51,7 @@ class AnalysisResults(BaseStorage):
         data: list[dict[str, str | int]]
             A list of dictionaries containing keys of `TABLE_FIELDS`.
 
-            - log_capture_time : str
+            - log_capture_time : int
             - estimated_battery_capacity : int
             - last_learned_battery_capacity : int
             - min_learned_battery_capacity : int

@@ -1,4 +1,4 @@
-import zoneinfo
+from zoneinfo import available_timezones
 
 import dash
 import dash_bootstrap_components as dbc
@@ -7,7 +7,7 @@ from dash.development.base_component import Component
 
 dash.register_page(__name__, path="/settings", order=99, name="Settings")
 
-TIMEZONE_LIST = sorted(list(zoneinfo.available_timezones()))
+TIMEZONE_LIST = sorted(list(available_timezones()))
 TZ_OPTIONS = [{"label": tz, "value": tz} for tz in TIMEZONE_LIST]
 
 
@@ -162,7 +162,7 @@ def init_dropdown(browser_tz: str, saved_tz: str) -> tuple[list[dict[str, str | 
     ],
     prevent_initial_call=True
 )
-def toggle_action(
+def alter_timezone_handler(
         _1, _2,
         current_val: str,
         action_children: list[Component | str],
@@ -200,7 +200,7 @@ def toggle_action(
                 False, no_update, no_update
             )
 
-        if not current_val or current_val == "disabled":
+        if not current_val or current_val == "disabled" or current_val not in TIMEZONE_LIST:
             return (no_update, ) * 11
 
         return (

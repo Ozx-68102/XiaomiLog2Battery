@@ -12,12 +12,14 @@ class Visualizer:
 
         self.cap_range = (1000, 15000)
 
-    def _preprocess(self, raw: list[dict[str, str | int]]) -> pd.DataFrame:
+    def _preprocess(self, raw: list[dict[str, str | int]], target_timezone: str) -> pd.DataFrame:
         if not raw:
             raise ValueError("No data provided.")
 
         df = pd.DataFrame(raw)
-        df["log_capture_time"] = pd.to_datetime(df.loc[:, "log_capture_time"], format="%Y-%m-%d %H:%M:%S")
+        df["log_capture_time"] = pd.to_datetime(df["log_capture_time"], unit="s", utc=True)
+        df["log_capture_time"] = df["log_capture_time"].dt.tz_convert(tz=target_timezone).dt.tz_localize(None) # noqa
+
         for field in self.cap_fields:
             df[field] = pd.to_numeric(df[field], errors="coerce")
 
@@ -54,8 +56,8 @@ class Visualizer:
             "health_percent": health_percent
         }
 
-    def gen_battery_changing_chart(self, model: str, data: list[dict[str, str | int]]) -> go.Figure:
-        df = self._preprocess(raw=data)
+    def gen_battery_changing_chart(self, model: str, timezone: str, data: list[dict[str, str | int]]) -> go.Figure:
+        df = self._preprocess(raw=data, target_timezone=timezone)
         df["avg_battery_capacity"] = df[self.avg_fields].mean().mean()
 
         fig = make_subplots(
@@ -115,8 +117,8 @@ class Visualizer:
         return fig
 
     
-    def gen_battery_health_chart(self, model: str, data: list[dict[str, str | int]]) -> go.Figure:
-        df = self._preprocess(raw=data)
+    def gen_battery_health_chart(self, model: str, timezone: str, data: list[dict[str, str | int]]) -> go.Figure:
+        df = self._preprocess(raw=data, target_timezone=timezone)
         if "design_capacity" not in df.columns and not df["design_capacity"].notna().any():
             raise ValueError(f"Cannot find design capacity for model '{model}'. Please ensure hardware data is parsed correctly.")
 

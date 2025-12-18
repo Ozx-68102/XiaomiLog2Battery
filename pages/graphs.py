@@ -66,10 +66,13 @@ def button_disabled(model: str | None) -> bool:
         Output("graph-alert", "color"),
     ],
     Input("generate-graph-btn", "n_clicks"),
-    State("model-selector", "value"),
+    [
+        State("model-selector", "value"),
+        State("global-timezone", "data"),
+    ],
     prevent_initial_call=True
 )
-def update_graphs(n_clicks: int, model: str | None) -> tuple[Component, bool, list[dbc.Row], str]:
+def update_graphs(n_clicks: int, model: str | None, timezone: str) -> tuple[Component, bool, list[dbc.Row], str]:
     if not n_clicks or not model:
         return (no_update, ) * 4
 
@@ -83,8 +86,8 @@ def update_graphs(n_clicks: int, model: str | None) -> tuple[Component, bool, li
         raw_data = ds.get_battery_data("analysis_results", model=model)
         viz = Visualizer()
 
-        trend_graph = viz.gen_battery_changing_chart(data=raw_data, model=model)
-        health_graph = viz.gen_battery_health_chart(data=raw_data, model=model)
+        trend_graph = viz.gen_battery_changing_chart(data=raw_data, model=model, timezone=timezone)
+        health_graph = viz.gen_battery_health_chart(data=raw_data, model=model, timezone=timezone)
 
         graphs_layout = dbc.Row([
             dbc.Col([

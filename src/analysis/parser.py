@@ -1,6 +1,8 @@
 import re
 from concurrent.futures import ProcessPoolExecutor, Future
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from src.config import BATTERY_CAPACITY_MAPPING, BATTERY_CAPACITY_TYPES_IN_LOG, ANALYSIS_RESULTS_FIELDS
 
@@ -122,9 +124,27 @@ class Parser:
             return None
 
     @staticmethod
-    def _format_time(time_str: str) -> str:
-        split_time = time_str.rsplit("-", 3)
-        return f"{split_time[0]} {split_time[1]}:{split_time[2]}:{split_time[3]}"
+    def _get_timestamp(string: str) -> int | None:
+        try:
+            time_pattern = re.compile(r"^== dumpstate: (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})", re.M)
+            time_matched = re.search(pattern=time_pattern, string=string)
+            if not time_matched:
+                return None
+
+            time_str = time_matched.group(1)
+
+            tz_pattern = re.compile(r"^\[persist\.sys\.timezone\]: \[(.*?)\]", re.M)
+            tz_matched = re.search(pattern=tz_pattern, string=string)
+            if not tz_matched:
+                return None
+
+            tz_name = tz_matched.group(1)
+
+            local_dt = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=ZoneInfo(tz_name))
+            return int(local_dt.timestamp())
+        except Exception: # noqa
+            return None
+
 
     def _parse_info(self, path: str | Path) -> dict[str, str | int] | None:
         path = Path(path)
@@ -136,8 +156,7 @@ class Parser:
         if not cont:
             return None
 
-        raw_time = filename.split("-", 3)[-1]
-        log_capture_time = self._format_time(raw_time)
+        log_capture_time = self._get_timestamp(string=cont)
 
         battery_cap = {}
         for cap_type in self.cap_types:

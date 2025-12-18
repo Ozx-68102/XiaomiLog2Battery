@@ -8,12 +8,11 @@ BATTERY_CAPACITY_TYPES = list(BATTERY_CAPACITY_MAPPING.values())
 BATTERY_CAPACITY_TYPES_IN_LOG = list(BATTERY_CAPACITY_MAPPING.keys())
 
 BATTERY_NUMERIC_FIELDS = [
-    "cycle_count", "hardware_capacity"
+    "log_capture_time", "cycle_count", "hardware_capacity"
 ]
 BATTERY_NUMERIC_FIELDS.extend(BATTERY_CAPACITY_TYPES)
 
 ANALYSIS_RESULTS_FIELDS = [
-    "log_capture_time", "phone_brand", "nickname",
-    "system_version", "design_capacity"
+    "phone_brand", "nickname", "system_version", "design_capacity"
 ]
 ANALYSIS_RESULTS_FIELDS.extend(BATTERY_NUMERIC_FIELDS)
