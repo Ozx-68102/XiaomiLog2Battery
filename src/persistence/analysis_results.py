@@ -44,7 +44,7 @@ class AnalysisResults(BaseStorage):
 
     def save_data(self, data: list[dict[str, str | int]]) -> int:
         """
-        Insert rows of battery analysis results into the table **analysis_results**.
+        Insert or replace rows of battery analysis results into the table **analysis_results**.
 
         Parameters
         ----------
@@ -76,7 +76,7 @@ class AnalysisResults(BaseStorage):
         with self.conn as c:
             cur = c.cursor()
             cur.executemany(
-                f"INSERT INTO analysis_results ({fields_str}) VALUES ({placeholders_str})",
+                f"INSERT OR REPLACE INTO analysis_results ({fields_str}) VALUES ({placeholders_str})",
                 [[item[fields] for fields in self.table_field] for item in data]
             )
 
@@ -85,14 +85,16 @@ class AnalysisResults(BaseStorage):
         return counts
 
     def get_unique_model(self) -> list[str] | None:
-        results = None
-        with self.conn as c:
-            c.row_factory = sqlite3.Row
-            cur = c.cursor()
-            cur.execute("SELECT DISTINCT nickname FROM analysis_results")
-            results = [row[0] for row in cur.fetchall()]
+        try:
+            with self.conn as c:
+                c.row_factory = sqlite3.Row
+                cur = c.cursor()
+                cur.execute("SELECT DISTINCT nickname FROM analysis_results")
+                results = [row[0] for row in cur.fetchall()]
 
-        return results if results else None
+            return results if results else None
+        except sqlite3.OperationalError:
+            return None
 
     def get_results(self, model: str | None = None) -> list[dict[str, str | int | float]] | None:
         results = None
@@ -102,10 +104,13 @@ class AnalysisResults(BaseStorage):
             statements += f" WHERE nickname = ?"
         statements += " ORDER BY log_capture_time DESC;"
 
-        with self.conn as c:
-            c.row_factory = sqlite3.Row
-            cur = c.cursor()
-            cur.execute(statements, (model, ) if model else None)
-            results = [dict(row) for row in cur.fetchall()]
+        try:
+            with self.conn as c:
+                c.row_factory = sqlite3.Row
+                cur = c.cursor()
+                cur.execute(statements, (model, ) if model else None)
+                results = [dict(row) for row in cur.fetchall()]
 
-        return results if results else None
+            return results if results else None
+        except sqlite3.OperationalError:
+            return None

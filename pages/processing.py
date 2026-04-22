@@ -97,8 +97,8 @@ def layout() -> list[Component]:
                                 {"label": "Initialize (Clear DB & Start New)", "value": "init"},
                                 {"label": "Append (Add to Existing DB)", "value": "append"}
                             ],
-                            value="init"
-                        )
+                            value="append",
+                        ),
                     ], width=12, md=6),
                     dbc.Col([
                         dbc.Label("Processing Performance Mode", class_name="fw-bold"),
@@ -110,8 +110,8 @@ def layout() -> list[Component]:
                                 {"label": "High (Maximum Performance)", "value": ThreadMode.HIGH}
                             ],
                             value=ThreadMode.MEDIUM,
-                            class_name="mb-3"
-                        )
+                            class_name="mb-3",
+                        ),
                     ], width=12, md=6),
                 ]),
                 dbc.Row([
@@ -157,7 +157,8 @@ def layout() -> list[Component]:
                         ),
                         width=12,
                     )
-                ])
+                ]),
+                html.Br(),
             ]),
         ], class_name="shadow-sm"),
         html.Br(),
@@ -252,7 +253,7 @@ def toggle_deletion_modal(
     triggered = ctx.triggered_id
 
     if triggered in ["pro-deletion-modal-close-btn", "pro-deletion-modal-delete-btn"]:
-        return False, no_update, no_update, no_update, no_update, no_update
+        return (False, ) + (no_update, ) * 5
 
     # if user click the deletion icon in file list
     if isinstance(triggered, dict) and triggered.get("type") == "file-delete-btn":
@@ -386,7 +387,7 @@ def decompress_handler(
 
         if results["status"] == "success":
             msg = [
-                results["message"] + "You can click ",
+                results["message"] + " You can click ",
                 dcc.Link("here", href="/graphs"),
                 " to generate graphs, or click ",
                 dcc.Link("here", href="/reports"),

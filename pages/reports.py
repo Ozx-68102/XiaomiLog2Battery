@@ -2,7 +2,8 @@ import dash
 import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
 import pandas as pd
-from dash import html, Input, Output, State, no_update
+from dash import html, Input, Output, State
+from dash.development.base_component import Component
 
 from src.analysis import DataServices
 
@@ -166,13 +167,13 @@ def layout():
     Input("reports-model-selector", "value"),
     State("global-timezone", "data")
 )
-def update_report(model: str, timezone: str) -> tuple[dbc.Col, list[dict[str, str | int | float]]]:
+def update_report(model: str, timezone: str) -> tuple[list[Component], list[dict[str, str | int | float]]]:
     if not model:
-        return no_update, []
+        return ([], ) * 2
 
     raw_data = DataServices().get_battery_data("analysis_results", model=model, health_snapshots=True)
     if not raw_data:
-        return no_update, []
+        return ([], ) * 2
 
     df = pd.DataFrame(raw_data)
 
@@ -196,4 +197,4 @@ def update_report(model: str, timezone: str) -> tuple[dbc.Col, list[dict[str, st
         get_general_card("Latest Health Snapshot", f"{current_health}%", "bi-heart-pulse-fill", color)
     ]
 
-    return general_cards, df.to_dict("records")  # noqa
+    return general_cards, df.to_dict("records")
