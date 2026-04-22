@@ -1,8 +1,19 @@
 # XiaomiLog2Battery
 
+![Archived](https://img.shields.io/badge/Status-Archived-inactive.svg)
 ![Python](https://img.shields.io/badge/Python-3.13-blue.svg)
 ![Dash](https://img.shields.io/badge/Framework-Dash_3.3.0+-00796B.svg)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
+
+> ## Project Archived
+>
+> **This project has been officially archived.**
+>
+> This was a personal project that I started on a whim during my sophomore year of university. What began as a simple curiosity to parse Xiaomi `bugreport` logs gradually grew into a full-featured web application with data analysis, interactive visualizations, persistent SQLite storage, and production deployment capabilities.
+>
+> Through building and iteratively improving this project (including a major AI-assisted refactor to v3), I gained valuable hands-on experience in log parsing, data processing, full-stack Dash development, database design, and software architecture. While the current codebase reveals some design immaturity - particularly in the overly object-oriented persistence layer and complex callback structures - it stands as an honest record of my growth journey as a developer.
+>
+> This project has fulfilled its purpose in my learning path. I am now archiving it with appreciation for the knowledge and personal growth it brought me.
 
 **XiaomiLog2Battery** is a practical tool designed to extract, analyze, and visualize battery health data from Xiaomi smartphone system logs (`bugreport`).
 
